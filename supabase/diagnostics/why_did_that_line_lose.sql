@@ -27,13 +27,14 @@ select c.name as group_name,
  order by 1;
 
 -- 3. The most recent spin, all 29 paylines, with the reason each one lost.
+--    Since 0022 the log stores the grid compactly; grid_from_bytes rebuilds it.
 --    Change the limit/offset to look further back.
 select (e->>'payline')::int as line,
        e->>'family'  as family,
        e->>'symbols' as what_landed,
        (e->>'won')::boolean as won,
        coalesce(e->>'group', e->>'reason') as verdict
-  from (select slot.explain_grid(grid) as ex
+  from (select slot.explain_grid(slot.grid_from_bytes(grid)) as ex
           from slot.spin_log
          order by created_at desc
          limit 1 offset 0) s,

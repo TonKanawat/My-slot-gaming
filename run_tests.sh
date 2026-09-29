@@ -11,7 +11,7 @@ for f in supabase/migrations/*.sql; do
 done
 
 total=0
-for t in engine spin rls accounts backoffice rewards rules; do
+for t in engine spin rls accounts backoffice rewards rules storage; do
   out=$(psql -d "$DB" -f "tests/${t}_test.sql" 2>&1) || { echo "$out" | grep -i error; exit 1; }
   n=$(echo "$out" | grep -c 'NOTICE:  ok ')
   total=$((total + n))

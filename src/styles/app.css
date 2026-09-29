@@ -628,6 +628,20 @@
 }
 .rung-mult { font-family: var(--font-num); font-size: .92rem; }
 
+/* ---------------------------------------------------------------- storage gauge */
+.gauge {
+  position: relative; height: 1rem; border-radius: 100px; overflow: hidden;
+  background: var(--surface-2); margin: .3rem 0 .5rem;
+}
+.gauge-fill { display: block; height: 100%; background: var(--win); border-radius: 100px; }
+.gauge[data-state='warn'] .gauge-fill { background: #C9962E; }
+.gauge[data-state='full'] .gauge-fill { background: var(--danger); }
+.gauge-warn {
+  position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink-3); opacity: .5;
+}
+.gauge-line { margin: 0; font-size: .88rem; }
+.gauge-line b { font-family: var(--font-num); }
+
 /* ---------------------------------------------------------------- rewards */
 .prize-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: .8rem;
