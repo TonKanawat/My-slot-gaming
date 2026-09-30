@@ -4,6 +4,8 @@ import { CombinationsTab } from './admin/CombinationsTab';
 import { PlayersTab } from './admin/PlayersTab';
 import { RulesTab } from './admin/RulesTab';
 import { SystemTab } from './admin/SystemTab';
+import { FreePointsTab } from './admin/FreePointsTab';
+import { fetchPointRequests } from '../lib/update1';
 import {
   fetchCombinations, fetchPlayers, fetchSymbols,
   type CombinationRow, type PlayerRow, type SymbolRow,
@@ -16,12 +18,14 @@ interface Props {
   onReadinessChange?: (r: Readiness) => void;
   /** Rendered when the game is playable, so the admin can get back to the board. */
   onPlay?: () => void;
+  initialTab?: Tab;
 }
 
-type Tab = 'symbols' | 'combinations' | 'players' | 'rules' | 'system';
+export type Tab = 'symbols' | 'combinations' | 'players' | 'rules' | 'freepoints' | 'system';
 
-export function AdminPanel({ email, onSignOut, onReadinessChange, onPlay }: Props) {
-  const [tab, setTab] = useState<Tab>('symbols');
+export function AdminPanel({ email, onSignOut, onReadinessChange, onPlay, initialTab }: Props) {
+  const [tab, setTab] = useState<Tab>(initialTab ?? 'symbols');
+  const [pendingRequests, setPendingRequests] = useState(0);
   const [symbols, setSymbols] = useState<SymbolRow[]>([]);
   const [combinations, setCombinations] = useState<CombinationRow[]>([]);
   const [players, setPlayers] = useState<PlayerRow[]>([]);
@@ -30,9 +34,11 @@ export function AdminPanel({ email, onSignOut, onReadinessChange, onPlay }: Prop
 
   const reload = useCallback(async () => {
     try {
-      const [s, c, p, r] = await Promise.all([
+      const [s, c, p, r, q] = await Promise.all([
         fetchSymbols(), fetchCombinations(), fetchPlayers(), fetchReadiness(),
+        fetchPointRequests().catch(() => []),
       ]);
+      setPendingRequests(q.filter((x) => x.status === 'pending').length);
       setSymbols(s);
       setCombinations(c);
       setPlayers(p);
@@ -97,6 +103,12 @@ export function AdminPanel({ email, onSignOut, onReadinessChange, onPlay }: Prop
                   onClick={() => setTab('rules')}>
             Payout rules
           </button>
+          <button role="tab" aria-selected={tab === 'freepoints'}
+                  data-on={tab === 'freepoints' ? 'true' : undefined}
+                  onClick={() => setTab('freepoints')}>
+            Free points
+            {pendingRequests > 0 && <span className="count alert">{pendingRequests}</span>}
+          </button>
           <button role="tab" aria-selected={tab === 'system'}
                   data-on={tab === 'system' ? 'true' : undefined}
                   onClick={() => setTab('system')}>
@@ -116,6 +128,7 @@ export function AdminPanel({ email, onSignOut, onReadinessChange, onPlay }: Prop
         {tab === 'combinations' &&
           <CombinationsTab symbols={symbols} combinations={combinations} onChanged={reload} />}
         {tab === 'rules' && <RulesTab onChanged={reload} />}
+        {tab === 'freepoints' && <FreePointsTab onPendingChange={setPendingRequests} />}
         {tab === 'system' && <SystemTab />}
         {tab === 'players' && <PlayersTab players={players} onChanged={reload} />}
       </main>

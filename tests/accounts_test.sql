@@ -108,7 +108,8 @@ begin
   update slot.wallet set free_points = 1050
    where user_id = '22220000-0000-0000-0000-000000000002';
 
-  n := slot.grant_free_points();
+  delete from slot.setting where key = 'last_free_grant';
+  n := slot.grant_free_points('2026-09-28');  -- a Monday
 
   select free_points into f from slot.wallet
    where user_id = '33330000-0000-0000-0000-000000000003';
@@ -131,7 +132,7 @@ end $$;
 do $$
 declare f bigint;
 begin
-  perform slot.grant_free_points();
+  perform slot.grant_free_points('2026-09-28');
   select free_points into f from slot.wallet
    where user_id = '33330000-0000-0000-0000-000000000003';
   perform slot.assert('a repeat run cannot exceed the ceiling', f, 1000::bigint);

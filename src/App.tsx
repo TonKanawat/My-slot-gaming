@@ -8,6 +8,14 @@ import { WhyPanel } from './components/WhyPanel';
 import { AdminPanel } from './components/AdminPanel';
 import { RewardsPanel } from './components/RewardsPanel';
 import { CombinationsPage } from './components/CombinationsPage';
+import { RankingPage } from './components/RankingPage';
+import { RequestPointsPage } from './components/RequestPointsPage';
+import { NameEditor } from './components/NameEditor';
+import { LineLegend } from './components/LineLegend';
+import type { Tab as AdminTab } from './components/AdminPanel';
+import {
+  fetchGrantSchedule, fetchPointRequests, weekday, type GrantSchedule,
+} from './lib/update1';
 import { supabase } from './lib/supabase';
 import { useSession } from './lib/session';
 import {
@@ -26,6 +34,12 @@ export default function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showRewards, setShowRewards] = useState(false);
   const [showCombos, setShowCombos] = useState(false);
+  const [showRanking, setShowRanking] = useState(false);
+  const [showRequests, setShowRequests] = useState(false);
+  const [adminTab, setAdminTab] = useState<AdminTab | undefined>(undefined);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => { setDisplayName(profile?.display_name ?? null); }, [profile]);
 
   useEffect(() => {
     if (!profile) return;
@@ -87,7 +101,8 @@ export default function App() {
         email={profile.email}
         onSignOut={signOut}
         onReadinessChange={setReadiness}
-        onPlay={() => setShowAdmin(false)}
+        onPlay={() => { setShowAdmin(false); setAdminTab(undefined); }}
+        initialTab={adminTab}
       />
     );
   }
@@ -101,6 +116,19 @@ export default function App() {
         onSignOut={signOut}
         onBack={() => setShowCombos(false)}
       />
+    );
+  }
+
+  if (showRanking) {
+    return (
+      <RankingPage email={profile.email} onSignOut={signOut} onBack={() => setShowRanking(false)} />
+    );
+  }
+
+  if (showRequests && profile.role === 'line_manager') {
+    return (
+      <RequestPointsPage email={profile.email} userId={profile.user_id}
+                         onSignOut={signOut} onBack={() => setShowRequests(false)} />
     );
   }
 
@@ -133,19 +161,29 @@ export default function App() {
     <Game
       onSignOut={signOut}
       email={profile.email}
+      name={displayName}
+      onNameSaved={setDisplayName}
       isAdmin={isAdmin}
-      onOpenAdmin={() => setShowAdmin(true)}
+      isLineManager={profile.role === 'line_manager'}
+      onOpenAdmin={(t?: AdminTab) => { setAdminTab(t); setShowAdmin(true); }}
       onOpenRewards={() => setShowRewards(true)}
       onOpenCombos={() => setShowCombos(true)}
+      onOpenRanking={() => setShowRanking(true)}
+      onOpenRequests={() => setShowRequests(true)}
     />
   );
 }
 
 /** The playable board. Every spin is decided by the server: the grid, the win and
  *  the wallet all come back from one call, and the browser only animates them. */
-function Game({ onSignOut, email, isAdmin, onOpenAdmin, onOpenRewards, onOpenCombos }: {
-  onSignOut: () => void; email: string; isAdmin: boolean; onOpenAdmin: () => void;
-  onOpenRewards: () => void; onOpenCombos: () => void;
+function Game({
+  onSignOut, email, name, onNameSaved, isAdmin, isLineManager,
+  onOpenAdmin, onOpenRewards, onOpenCombos, onOpenRanking, onOpenRequests,
+}: {
+  onSignOut: () => void; email: string; name: string | null; onNameSaved: (n: string) => void;
+  isAdmin: boolean; isLineManager: boolean; onOpenAdmin: (tab?: AdminTab) => void;
+  onOpenRewards: () => void; onOpenCombos: () => void; onOpenRanking: () => void;
+  onOpenRequests: () => void;
 }) {
   const [symbols, setSymbols] = useState<SymbolRow[]>([]);
   const [grid, setGrid] = useState<string[][]>([]);
@@ -158,6 +196,28 @@ function Game({ onSignOut, email, isAdmin, onOpenAdmin, onOpenRewards, onOpenCom
   const [freeSpins, setFreeSpins] = useState<FreeSpins>(NO_FREE_SPINS);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // The line being pointed at in the legend, shown on its own on the board.
+  const [focusLine, setFocusLine] = useState<number | null>(null);
+  const [schedule, setSchedule] = useState<GrantSchedule | null>(null);
+  // Admins: free-point requests waiting, and how many are close to expiring.
+  const [waiting, setWaiting] = useState<{ n: number; urgent: number }>({ n: 0, urgent: 0 });
+
+  useEffect(() => {
+    fetchGrantSchedule().then(setSchedule).catch(() => setSchedule(null));
+    if (isAdmin) {
+      fetchPointRequests()
+        .then((r) => {
+          const p = r.filter((x) => x.status === 'pending');
+          setWaiting({ n: p.length, urgent: p.filter((x) => x.reminder === '12h').length });
+        })
+        .catch(() => undefined);
+    }
+  }, [isAdmin]);
+
+  const freeNote = schedule?.next
+    ? `spent first · +${schedule.next.amount.toLocaleString()} ${weekday(schedule.next.date)} 12:00`
+      + (schedule.ceiling_on ? ` · up to ${schedule.ceiling.toLocaleString()}` : '')
+    : 'spent first';
 
   const byId = useMemo(() => new Map(symbols.map((s) => [s.id, s])), [symbols]);
   const affordable = wallet.free_points + wallet.points;
@@ -192,6 +252,7 @@ function Game({ onSignOut, email, isAdmin, onOpenAdmin, onOpenRewards, onOpenCom
     try {
       const r = await play(bet);
       setResult(r);
+      setFocusLine(null);
       setGrid(r.grid);
       setWallet({ free_points: r.free_points, points: r.points });
       setFreeSpins((prev) => ({
@@ -217,23 +278,35 @@ function Game({ onSignOut, email, isAdmin, onOpenAdmin, onOpenRewards, onOpenCom
           <span className="brand-mark" aria-hidden="true" />
           <span className="brand-name">bluePi Slot</span>
         </div>
-        <Wallets freePoints={wallet.free_points} points={wallet.points} />
+        <Wallets freePoints={wallet.free_points} points={wallet.points} freeNote={freeNote} />
         <div className="who">
-          <span className="who-email">{email}</span>
-          <button className="linkish" onClick={onOpenCombos}>Winning combinations</button>
-          <button className="linkish" onClick={onOpenRewards}>Rewards</button>
-          {isAdmin && <button className="linkish" onClick={onOpenAdmin}>Back office</button>}
-          <button className="linkish" onClick={onSignOut}>Sign out</button>
+          <NameEditor name={name} email={email} onSaved={onNameSaved} />
+          <nav className="topnav" aria-label="Pages">
+            <button className="linkish" onClick={onOpenCombos}>Winning combinations</button>
+            <button className="linkish" onClick={onOpenRanking}>Ranking</button>
+            <button className="linkish" onClick={onOpenRewards}>Rewards</button>
+            {isLineManager && <button className="linkish" onClick={onOpenRequests}>Request points</button>}
+            {isAdmin && <button className="linkish" onClick={() => onOpenAdmin()}>Back office</button>}
+            <button className="linkish" onClick={onSignOut}>Sign out</button>
+          </nav>
         </div>
       </header>
 
       <main className="stage">
+        {isAdmin && waiting.n > 0 && (
+          <button className="req-banner" onClick={() => onOpenAdmin('freepoints')}
+                  data-urgent={waiting.urgent > 0 ? 'true' : undefined}>
+            <b>{waiting.n} free-point {waiting.n === 1 ? 'request is' : 'requests are'} waiting for you</b>
+            {waiting.urgent > 0 && <> · {waiting.urgent} {waiting.urgent === 1 ? 'expires' : 'expire'} in under 12 hours</>}
+            <span className="req-banner-go">Review →</span>
+          </button>
+        )}
         {/* Board and controls sit side by side: the bet column and Spin are within
             reach of the reels rather than below the fold on a laptop. */}
         <div className="play-area">
           <Board
             grid={grid} byId={byId} pool={symbols} spinToken={spinToken}
-            winningLines={result?.lines ?? []} highlighted={null}
+            winningLines={result?.lines ?? []} highlighted={focusLine}
             onAllSettled={() => setSpinning(false)}
           />
 
@@ -279,6 +352,10 @@ function Game({ onSignOut, email, isAdmin, onOpenAdmin, onOpenRewards, onOpenCom
             ) : (
               <p>No winning lines this time.{result.was_free_spin && <span className="tag rule">free spin</span>}</p>
             )}
+            {result.lines.length > 1 && (
+              <p className="hint legend-hint">Each winning line has its own colour. Point at one to see it alone.</p>
+            )}
+            <LineLegend lines={result.lines} active={focusLine} onHover={setFocusLine} />
             <WhyPanel grid={result.grid} />
           </div>
         )}

@@ -8,6 +8,7 @@ export interface Profile {
   user_id: string;
   email: string;
   role: Role;
+  display_name?: string | null;
 }
 
 export interface SessionState {

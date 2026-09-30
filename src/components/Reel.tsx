@@ -13,7 +13,8 @@ interface Props {
   spinToken: number;
   delayMs: number;
   onSettled?: () => void;
-  litRows: Set<number>;
+  /** Visible row → the colour of the winning line through it. */
+  litRows: Map<number, string>;
   dimUnlit: boolean;
 }
 
@@ -65,7 +66,8 @@ export function Reel({ final, pool, spinToken, delayMs, onSettled, litRows, dimU
           const visibleRow = i - (strip.length - 5);
           const lit = !rolling && visibleRow >= 0 && litRows.has(visibleRow);
           return (
-            <div className="reel-cell" key={`${i}-${sym?.id ?? 'x'}`} data-lit={lit ? 'true' : undefined}>
+            <div className="reel-cell" key={`${i}-${sym?.id ?? 'x'}`} data-lit={lit ? 'true' : undefined}
+                 style={lit ? { ['--lit' as string]: litRows.get(visibleRow) } : undefined}>
               <SymbolTile symbol={sym} dim={dimUnlit && !lit && !rolling} />
             </div>
           );
