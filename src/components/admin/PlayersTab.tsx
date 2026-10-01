@@ -1,5 +1,8 @@
 import { Fragment, useEffect, useState, type FormEvent } from 'react';
-import { fetchDuplicateNames, type DuplicateName } from '../../lib/update1';
+import {
+  fetchDeletedUsers, fetchDuplicateNames, type DeletedUser, type DuplicateName,
+} from '../../lib/update1';
+import { DeleteUserDialog } from './DeleteUserDialog';
 import { useNameCheck } from '../../lib/useNameCheck';
 import {
   adjustPoints, registerPlayer, setRole,
@@ -34,7 +37,13 @@ export function PlayersTab({ players, onChanged }: Props) {
   const [dupes, setDupes] = useState<DuplicateName[]>([]);
   useEffect(() => {
     fetchDuplicateNames().then(setDupes).catch(() => setDupes([]));
+    fetchDeletedUsers(20).then(setDeleted).catch(() => setDeleted([]));
   }, [players]);
+
+  // Delete: the button opens a confirmation that needs the email typed in.
+  const [deleting, setDeleting] = useState<PlayerRow | null>(null);
+  const [deleted, setDeleted] = useState<DeletedUser[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function add(e: FormEvent) {
     e.preventDefault();
@@ -130,6 +139,7 @@ export function PlayersTab({ players, onChanged }: Props) {
           </div>
         )}
         <h3>People <span className="count">{players.length}</span></h3>
+        {notice && <p className="auth-notice" role="status">{notice}</p>}
         <p className="hint">
           Passwords are held by Supabase Auth as one-way hashes, so nobody — including
           you — can read them back. What is shown here is whether a person has set one
@@ -191,9 +201,17 @@ export function PlayersTab({ players, onChanged }: Props) {
                       <td className="num">{p.free_points.toLocaleString()}</td>
                       <td className="num">{p.points.toLocaleString()}</td>
                       <td>
-                        <button className="linkish" onClick={() => openWallet(p)}>
-                          {editing === p.id ? 'Close' : 'Edit points'}
-                        </button>
+                        <div className="rowactions">
+                          <button className="linkish" onClick={() => openWallet(p)}>
+                            {editing === p.id ? 'Close' : 'Edit points'}
+                          </button>
+                          {p.role !== 'system_admin' && (
+                            <button className="linkish danger"
+                                    onClick={() => { setNotice(null); setDeleting(p); }}>
+                              Delete
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
 
@@ -240,6 +258,39 @@ export function PlayersTab({ players, onChanged }: Props) {
         )}
         {error && <p className="auth-error" role="alert">{error}</p>}
       </div>
+
+      {deleted.length > 0 && (
+        <div className="card">
+          <h3>Recently deleted <span className="count">{deleted.length}</span></h3>
+          <ul className="claim-list">
+            {deleted.map((d) => (
+              <li className="claim" key={`${d.email}-${d.deleted_at}`}>
+                <div>
+                  <b>{d.name}</b> <span className="pemail inline">{d.email}</span>
+                  <span className="claim-meta">
+                    {d.role.replace('_', ' ')} · had {Number(d.free_points).toLocaleString()} free
+                    and {Number(d.points).toLocaleString()} Wallet points · {Number(d.spins).toLocaleString()} spins
+                    {d.reason && <> · “{d.reason}”</>}
+                  </span>
+                </div>
+                <span className="claim-meta">
+                  deleted by {d.deleted_by}<br />
+                  {new Date(d.deleted_at).toLocaleString(undefined,
+                    { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {deleting && (
+        <DeleteUserDialog
+          person={deleting}
+          onClose={() => setDeleting(null)}
+          onDeleted={(msg) => { setDeleting(null); setEditing(null); setNotice(msg); onChanged(); }}
+        />
+      )}
     </div>
   );
 }

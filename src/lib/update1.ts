@@ -192,3 +192,48 @@ export async function fetchDuplicateNames(): Promise<DuplicateName[]> {
 export function nameKey(s: string) {
   return s.replace(/\s+/g, ' ').trim().toLowerCase();
 }
+
+// ---------------------------------------------------------------- deleting a person
+export interface DeletePreview {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  first_login_at: string | null;
+  free_points: number;
+  points: number;
+  spins: number;
+  ledger_rows: number;
+  pending_claims: number;
+  held_points: number;
+  approved_claims: number;
+  pending_requests: number;
+  allowed: boolean;
+  blocked_reason: string | null;
+}
+
+export async function fetchDeletePreview(id: string): Promise<DeletePreview> {
+  const { data, error } = await client().rpc('delete_preview', { p_target: id });
+  if (error) throw new Error(error.message);
+  return data as DeletePreview;
+}
+
+/** confirmEmail must be the person's email — the database checks it too. */
+export async function deleteUser(id: string, confirmEmail: string, reason?: string) {
+  const { data, error } = await client().rpc('delete_user', {
+    p_target: id, p_confirm_email: confirmEmail, p_reason: reason || null,
+  });
+  if (error) throw new Error(error.message);
+  return data as { deleted: string; name: string };
+}
+
+export interface DeletedUser {
+  email: string; name: string; role: string; free_points: number; points: number;
+  spins: number; reason: string | null; deleted_by: string; deleted_at: string;
+}
+
+export async function fetchDeletedUsers(limit = 20): Promise<DeletedUser[]> {
+  const { data, error } = await client().rpc('deleted_users', { p_limit: limit });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as DeletedUser[];
+}

@@ -918,3 +918,30 @@
   .who.sitenav { margin-top: 0; }
   .sitenav .topnav { gap: 0 .9rem; }
 }
+
+/* ---------------------------------------------------------------- delete a person */
+.rowactions { display: flex; align-items: center; gap: .9rem; white-space: nowrap; }
+.pemail.inline { display: inline; margin-left: .35rem; }
+.modal-back {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center;
+  background: rgba(27, 28, 46, .42); padding: 1rem; overflow-y: auto;
+}
+.modal {
+  width: min(480px, 100%); background: var(--surface); border-radius: var(--r-lg);
+  box-shadow: 0 20px 60px rgba(27, 28, 46, .3); padding: 1.3rem 1.4rem 1.1rem;
+  display: flex; flex-direction: column; gap: .8rem; border-top: 4px solid var(--danger);
+}
+.modal h3 { margin: 0; font-size: 1.12rem; overflow-wrap: anywhere; }
+.modal-lead { margin: 0; font-size: .9rem; line-height: 1.5; color: var(--ink-2); overflow-wrap: anywhere; }
+.del-list { margin: 0; padding-left: 1.1rem; font-size: .86rem; line-height: 1.6; color: var(--ink-2); }
+.del-list .del-warn { color: var(--danger); }
+.modal .field > span { text-transform: none; letter-spacing: 0; font-size: .8rem; color: var(--ink-2); display: block; }
+.modal .field > span .m { font-family: var(--font-num); color: var(--ink); overflow-wrap: anywhere; }
+.modal-actions { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: .2rem; }
+.danger-btn {
+  cursor: pointer; border: none; border-radius: 999px; padding: .65rem 1.3rem;
+  font-weight: 700; color: #fff; background: var(--danger);
+  transition: opacity .15s ease, transform .12s ease;
+}
+.danger-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.danger-btn:disabled { opacity: .4; cursor: not-allowed; }
