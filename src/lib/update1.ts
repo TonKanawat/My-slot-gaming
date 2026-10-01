@@ -161,3 +161,34 @@ export function pageNumbers(page: number, pages: number): (number | 'gap')[] {
   out.push(pages);
   return out;
 }
+
+// ---------------------------------------------------------------- duplicate names
+export interface NameCheck {
+  ok: boolean;
+  name: string;
+  reason?: 'length' | 'taken';
+  taken_by?: string;
+  /** Admins only. */
+  taken_by_email?: string | null;
+  message?: string;
+}
+
+/** isNew: an admin checking a name for someone not registered yet. */
+export async function checkDisplayName(name: string, isNew = false): Promise<NameCheck> {
+  const { data, error } = await client().rpc('check_display_name', { p_name: name, p_new: isNew });
+  if (error) throw new Error(error.message);
+  return data as NameCheck;
+}
+
+export interface DuplicateName { name: string; people: number; emails: string[]; }
+
+export async function fetchDuplicateNames(): Promise<DuplicateName[]> {
+  const { data, error } = await client().rpc('duplicate_names');
+  if (error) throw new Error(error.message);
+  return (data ?? []) as DuplicateName[];
+}
+
+/** The same comparison the database makes: case and extra spaces don't count. */
+export function nameKey(s: string) {
+  return s.replace(/\s+/g, ' ').trim().toLowerCase();
+}

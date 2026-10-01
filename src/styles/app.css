@@ -871,3 +871,26 @@
 }
 /* Stacked cards on the full-page views (rewards, ranking, requests) need air between them. */
 .admin > .card + .card { margin-top: 1.25rem; }
+
+/* ---------------------------------------------------------------- duplicate names */
+.name-check { font-size: .76rem; line-height: 1.4; color: var(--ink-3); min-height: 1.05em; }
+.name-check[data-state='ok'] { color: var(--win); font-weight: 600; }
+.name-check[data-state='taken'], .name-check[data-state='invalid'] { color: var(--danger); font-weight: 600; }
+.name-check[data-state='idle'] { min-height: 0; }
+.name-pop input[data-state='taken'], .name-pop input[data-state='invalid'],
+.field input[aria-invalid='true'] {
+  border-color: var(--danger); box-shadow: 0 0 0 3px rgba(178, 58, 44, .12);
+}
+.dupe-warn {
+  display: flex; flex-direction: column; gap: .3rem;
+  background: #FFF6F4; border: 1px solid #F1C4BC; border-radius: 12px;
+  padding: .75rem .9rem; margin-bottom: 1rem; font-size: .85rem; color: var(--ink);
+}
+.dupe-warn b:first-child { color: var(--danger); }
+.dupe-warn ul { margin: .2rem 0 0; padding-left: 1.1rem; }
+.dupe-warn li { margin: .15rem 0; overflow-wrap: anywhere; }
+/* Grid items default to min-width:auto, so a wide table pushed its card past the
+   page edge instead of scrolling inside it. */
+.admin-pane > * { min-width: 0; }
+/* Table wrapper: wide tables scroll sideways inside their card. */
+.tw { overflow-x: auto; -webkit-overflow-scrolling: touch; }

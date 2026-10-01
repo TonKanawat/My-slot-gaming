@@ -1,4 +1,6 @@
-import { Fragment, useState, type FormEvent } from 'react';
+import { Fragment, useEffect, useState, type FormEvent } from 'react';
+import { fetchDuplicateNames, type DuplicateName } from '../../lib/update1';
+import { useNameCheck } from '../../lib/useNameCheck';
 import {
   adjustPoints, registerPlayer, setRole,
   type PlayerRow,
@@ -22,6 +24,17 @@ export function PlayersTab({ players, onChanged }: Props) {
   const [freeDelta, setFreeDelta] = useState(0);
   const [pointsDelta, setPointsDelta] = useState(0);
   const [note, setNote] = useState('');
+
+  // Live warning while a display name is typed for a new registration.
+  const nameCheck = useNameCheck(displayName, { isNew: true });
+  const nameBlocked = nameCheck.kind === 'taken' || nameCheck.kind === 'invalid';
+
+  // Names already shared by more than one person (possible from before names
+  // were checked). Re-read whenever the people list changes.
+  const [dupes, setDupes] = useState<DuplicateName[]>([]);
+  useEffect(() => {
+    fetchDuplicateNames().then(setDupes).catch(() => setDupes([]));
+  }, [players]);
 
   async function add(e: FormEvent) {
     e.preventDefault();
@@ -68,7 +81,7 @@ export function PlayersTab({ players, onChanged }: Props) {
   }
 
   return (
-    <div className="admin-pane">
+    <div className="admin-pane stack">
       <form className="card form" onSubmit={add}>
         <h3>Register an address</h3>
         <p className="hint">
@@ -83,13 +96,39 @@ export function PlayersTab({ players, onChanged }: Props) {
         </label>
         <label className="field">
           <span>Display name (optional)</span>
-          <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={60} />
+          <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={30}
+                 aria-invalid={nameBlocked} aria-describedby="reg-name-check" />
+          {nameCheck.kind !== 'idle' && (
+            <div id="reg-name-check" className="name-check" data-state={nameCheck.kind} role="status">
+              {nameCheck.kind === 'checking' && 'Checking…'}
+              {nameCheck.kind === 'ok' && '✓ Nobody else uses this name'}
+              {nameCheck.kind === 'taken' && (
+                <>Already used by <b>{nameCheck.check.taken_by}</b>
+                  {nameCheck.check.taken_by_email && <> ({nameCheck.check.taken_by_email})</>}
+                  {' '}— choose another name, or leave it empty and they can set their own.</>
+              )}
+              {nameCheck.kind === 'invalid' && nameCheck.message}
+            </div>
+          )}
         </label>
         {error && <p className="auth-error" role="alert">{error}</p>}
-        <button className="spin" disabled={busy}>{busy ? 'Saving…' : 'Register'}</button>
+        <button className="spin" disabled={busy || nameBlocked || nameCheck.kind === 'checking'}>
+          {busy ? 'Saving…' : 'Register'}
+        </button>
       </form>
 
       <div className="card">
+        {dupes.length > 0 && (
+          <div className="dupe-warn" role="status">
+            <b>{dupes.length === 1 ? 'One name is' : `${dupes.length} names are`} shared by more than one person</b>
+            <span className="hint">They look identical in the ranking. Ask one of them to change it from the name in their top bar.</span>
+            <ul>
+              {dupes.map((d) => (
+                <li key={d.name}><b>“{d.name}”</b> — {d.emails.join(', ')}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <h3>People <span className="count">{players.length}</span></h3>
         <p className="hint">
           Passwords are held by Supabase Auth as one-way hashes, so nobody — including

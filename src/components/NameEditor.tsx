@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { saveDisplayName } from '../lib/update1';
+import { useNameCheck } from '../lib/useNameCheck';
 
 /** The signed-in person's name in the top bar. Clicking it lets them change it;
  *  this is the name everyone else sees in the ranking. */
@@ -13,6 +14,7 @@ export function NameEditor({ name, email, onSaved }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const box = useRef<HTMLDivElement>(null);
+  const check = useNameCheck(open ? value : '', { current: name });
 
   useEffect(() => { if (open) { setValue(name ?? ''); setError(null); } }, [open, name]);
 
@@ -59,13 +61,24 @@ export function NameEditor({ name, email, onSaved }: {
         <form className="name-pop" onSubmit={save}>
           <label htmlFor="display-name">Display name</label>
           <input id="display-name" value={value} maxLength={30} autoFocus
-                 onChange={(e) => setValue(e.target.value)} placeholder="How others see you" />
+                 onChange={(e) => setValue(e.target.value)} placeholder="How others see you"
+                 aria-invalid={check.kind === 'taken' || check.kind === 'invalid'}
+                 aria-describedby="display-name-check"
+                 data-state={check.kind} />
+          <span id="display-name-check" className="name-check" data-state={check.kind} role="status">
+            {check.kind === 'checking' && 'Checking…'}
+            {check.kind === 'ok' && '✓ Nobody else uses this name'}
+            {check.kind === 'taken' && check.check.message}
+            {check.kind === 'invalid' && check.message}
+          </span>
           <span className="name-hint">2–30 characters · shown in the ranking · {email}</span>
           {error && <span className="name-error" role="alert">{error}</span>}
           <div className="name-actions">
             <button type="button" className="linkish" onClick={() => setOpen(false)}>Cancel</button>
             <button type="submit" className="spin small"
-                    disabled={busy || value.trim().length < 2}>{busy ? 'Saving…' : 'Save'}</button>
+                    disabled={busy || value.trim().length < 2
+                              || check.kind === 'taken' || check.kind === 'invalid'
+                              || check.kind === 'checking'}>{busy ? 'Saving…' : 'Save'}</button>
           </div>
         </form>
       )}
