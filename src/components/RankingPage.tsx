@@ -1,16 +1,15 @@
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchRanking, pageNumbers, type RankRow } from '../lib/update1';
 
 interface Props {
-  email: string;
-  onSignOut: () => void;
-  onBack: () => void;
+  nav: ReactNode;
 }
 
 const PER_PAGE = 20;
 
 /** Everyone who has played, ranked by the points in their Wallet. */
-export function RankingPage({ email, onSignOut, onBack }: Props) {
+export function RankingPage({ nav }: Props) {
   const [rows, setRows] = useState<RankRow[]>([]);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -50,11 +49,7 @@ export function RankingPage({ email, onSignOut, onBack }: Props) {
           <span className="brand-name">bluePi Slot</span>
           <span className="role-pill">ranking</span>
         </div>
-        <div className="who">
-          <span className="who-email">{email}</span>
-          <button className="linkish" onClick={onBack}>Back to the game</button>
-          <button className="linkish" onClick={onSignOut}>Sign out</button>
-        </div>
+        {nav}
       </header>
 
       <main className="admin narrow">

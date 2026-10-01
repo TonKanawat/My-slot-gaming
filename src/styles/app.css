@@ -894,3 +894,27 @@
 .admin-pane > * { min-width: 0; }
 /* Table wrapper: wide tables scroll sideways inside their card. */
 .tw { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ---------------------------------------------------------------- shared top nav */
+.navlink { position: relative; }
+.navlink[data-on='true'] { color: var(--ink); cursor: default; }
+.navlink[data-on='true']::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: .2rem;
+  height: 2px; border-radius: 2px; background: var(--accent);
+}
+.navlink[data-on='true']:hover { text-decoration: none; }
+.notice-links { margin-top: .9rem; font-size: .88rem; color: var(--ink-2); }
+.notice-links .linkish { padding: 0; }
+/* The navigation is its own row under the logo and wallets on every page, so it
+   sits in the same place wherever you are. */
+.who.sitenav {
+  order: 3; flex: 1 0 100%; justify-content: space-between; gap: .4rem 1rem;
+  border-top: 1px solid var(--line); padding-top: .35rem; margin-top: -.4rem;
+}
+.sitenav .topnav { gap: .1rem 1.15rem; }
+.who-me { display: flex; align-items: center; gap: .9rem; }
+@media (min-width: 721px) { .sitenav .name-pop { right: 0; left: auto; } }
+@media (max-width: 720px) {
+  .who.sitenav { margin-top: 0; }
+  .sitenav .topnav { gap: 0 .9rem; }
+}

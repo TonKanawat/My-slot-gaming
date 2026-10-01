@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { SymbolsTab } from './admin/SymbolsTab';
 import { CombinationsTab } from './admin/CombinationsTab';
@@ -13,17 +14,14 @@ import {
 import { fetchReadiness, type Readiness } from '../lib/api';
 
 interface Props {
-  email: string;
-  onSignOut: () => void;
+  nav: ReactNode;
   onReadinessChange?: (r: Readiness) => void;
-  /** Rendered when the game is playable, so the admin can get back to the board. */
-  onPlay?: () => void;
   initialTab?: Tab;
 }
 
 export type Tab = 'symbols' | 'combinations' | 'players' | 'rules' | 'freepoints' | 'system';
 
-export function AdminPanel({ email, onSignOut, onReadinessChange, onPlay, initialTab }: Props) {
+export function AdminPanel({ nav, onReadinessChange, initialTab }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab ?? 'symbols');
   const [pendingRequests, setPendingRequests] = useState(0);
   const [symbols, setSymbols] = useState<SymbolRow[]>([]);
@@ -60,13 +58,7 @@ export function AdminPanel({ email, onSignOut, onReadinessChange, onPlay, initia
           <span className="brand-name">bluePi Slot</span>
           <span className="role-pill">back office</span>
         </div>
-        <div className="who">
-          <span className="who-email">{email}</span>
-          {readiness?.ready && onPlay && (
-            <button className="linkish" onClick={onPlay}>Go to the game</button>
-          )}
-          <button className="linkish" onClick={onSignOut}>Sign out</button>
-        </div>
+        {nav}
       </header>
 
       <main className="admin">

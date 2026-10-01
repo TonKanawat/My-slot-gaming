@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Board } from './components/Board';
 import { BetSelector } from './components/BetSelector';
 import { Wallets } from './components/Wallets';
@@ -10,7 +10,7 @@ import { RewardsPanel } from './components/RewardsPanel';
 import { CombinationsPage } from './components/CombinationsPage';
 import { RankingPage } from './components/RankingPage';
 import { RequestPointsPage } from './components/RequestPointsPage';
-import { NameEditor } from './components/NameEditor';
+import { TopNav, type View } from './components/TopNav';
 import { LineLegend } from './components/LineLegend';
 import type { Tab as AdminTab } from './components/AdminPanel';
 import {
@@ -31,11 +31,7 @@ export default function App() {
   const { loading, session, profile, rejected, claimError, signOut } = useSession();
   const [readiness, setReadiness] = useState<Readiness | null>(null);
   const [readinessError, setReadinessError] = useState<string | null>(null);
-  const [showAdmin, setShowAdmin] = useState(false);
-  const [showRewards, setShowRewards] = useState(false);
-  const [showCombos, setShowCombos] = useState(false);
-  const [showRanking, setShowRanking] = useState(false);
-  const [showRequests, setShowRequests] = useState(false);
+  const [view, setView] = useState<View>('game');
   const [adminTab, setAdminTab] = useState<AdminTab | undefined>(undefined);
   const [displayName, setDisplayName] = useState<string | null>(null);
 
@@ -92,56 +88,47 @@ export default function App() {
   }
 
   const isAdmin = profile.role === 'system_admin' || profile.role === 'deputy_admin';
+  const isLineManager = profile.role === 'line_manager';
+  const gameReady = readiness?.ready ?? false;
 
-  // An admin who opens the back office, or who has no choice because the game is
-  // not configured yet. Everyone else just gets told to wait.
-  if (isAdmin && (showAdmin || (readiness && !readiness.ready))) {
+  const go = (v: View, tab?: AdminTab) => {
+    setAdminTab(v === 'admin' ? tab : undefined);
+    setView(v);
+    window.scrollTo(0, 0);
+  };
+
+  // An admin with a game that isn't configured yet has nowhere else to play.
+  const current: View =
+    isAdmin && readiness && !readiness.ready && view === 'game' ? 'admin'
+    : view === 'admin' && !isAdmin ? 'game'
+    : view === 'requests' && !isLineManager ? 'game'
+    : view;
+
+  const nav = (
+    <TopNav
+      current={current} name={displayName} email={profile.email} onNameSaved={setDisplayName}
+      isAdmin={isAdmin} isLineManager={isLineManager} gameReady={gameReady}
+      onNavigate={go} onSignOut={signOut}
+    />
+  );
+
+  if (current === 'admin') {
     return (
       <AdminPanel
-        email={profile.email}
-        onSignOut={signOut}
+        key={adminTab ?? 'admin'}
+        nav={nav}
         onReadinessChange={setReadiness}
-        onPlay={() => { setShowAdmin(false); setAdminTab(undefined); }}
         initialTab={adminTab}
       />
     );
   }
 
-  // Reachable whether or not the board is configured: a player looking up the rules
-  // should not be blocked by a game that is mid-setup.
-  if (showCombos) {
-    return (
-      <CombinationsPage
-        email={profile.email}
-        onSignOut={signOut}
-        onBack={() => setShowCombos(false)}
-      />
-    );
-  }
-
-  if (showRanking) {
-    return (
-      <RankingPage email={profile.email} onSignOut={signOut} onBack={() => setShowRanking(false)} />
-    );
-  }
-
-  if (showRequests && profile.role === 'line_manager') {
-    return (
-      <RequestPointsPage email={profile.email} userId={profile.user_id}
-                         onSignOut={signOut} onBack={() => setShowRequests(false)} />
-    );
-  }
-
-  if (showRewards) {
-    return (
-      <RewardsPanel
-        email={profile.email}
-        isAdmin={isAdmin}
-        onSignOut={signOut}
-        onBack={() => setShowRewards(false)}
-      />
-    );
-  }
+  // These pages work whether or not the board is configured: looking up the rules
+  // or the ranking shouldn't be blocked by a game that is mid-setup.
+  if (current === 'combos') return <CombinationsPage nav={nav} />;
+  if (current === 'ranking') return <RankingPage nav={nav} />;
+  if (current === 'requests') return <RequestPointsPage nav={nav} userId={profile.user_id} />;
+  if (current === 'rewards') return <RewardsPanel nav={nav} email={profile.email} isAdmin={isAdmin} />;
 
   if (readiness && !readiness.ready) {
     return (
@@ -153,37 +140,31 @@ export default function App() {
         <ul className="missing">
           {readiness.missing.map((m) => <li key={m}>{m}</li>)}
         </ul>
+        <p className="notice-links">
+          Meanwhile:{' '}
+          <button className="linkish" onClick={() => go('combos')}>Winning combinations</button>
+          {' · '}
+          <button className="linkish" onClick={() => go('ranking')}>Ranking</button>
+          {' · '}
+          <button className="linkish" onClick={() => go('rewards')}>Rewards</button>
+        </p>
       </Notice>
     );
   }
 
   return (
     <Game
-      onSignOut={signOut}
-      email={profile.email}
-      name={displayName}
-      onNameSaved={setDisplayName}
+      nav={nav}
       isAdmin={isAdmin}
-      isLineManager={profile.role === 'line_manager'}
-      onOpenAdmin={(t?: AdminTab) => { setAdminTab(t); setShowAdmin(true); }}
-      onOpenRewards={() => setShowRewards(true)}
-      onOpenCombos={() => setShowCombos(true)}
-      onOpenRanking={() => setShowRanking(true)}
-      onOpenRequests={() => setShowRequests(true)}
+      onOpenAdmin={(t?: AdminTab) => go('admin', t)}
     />
   );
 }
 
 /** The playable board. Every spin is decided by the server: the grid, the win and
  *  the wallet all come back from one call, and the browser only animates them. */
-function Game({
-  onSignOut, email, name, onNameSaved, isAdmin, isLineManager,
-  onOpenAdmin, onOpenRewards, onOpenCombos, onOpenRanking, onOpenRequests,
-}: {
-  onSignOut: () => void; email: string; name: string | null; onNameSaved: (n: string) => void;
-  isAdmin: boolean; isLineManager: boolean; onOpenAdmin: (tab?: AdminTab) => void;
-  onOpenRewards: () => void; onOpenCombos: () => void; onOpenRanking: () => void;
-  onOpenRequests: () => void;
+function Game({ nav, isAdmin, onOpenAdmin }: {
+  nav: ReactNode; isAdmin: boolean; onOpenAdmin: (tab?: AdminTab) => void;
 }) {
   const [symbols, setSymbols] = useState<SymbolRow[]>([]);
   const [grid, setGrid] = useState<string[][]>([]);
@@ -279,17 +260,7 @@ function Game({
           <span className="brand-name">bluePi Slot</span>
         </div>
         <Wallets freePoints={wallet.free_points} points={wallet.points} freeNote={freeNote} />
-        <div className="who">
-          <NameEditor name={name} email={email} onSaved={onNameSaved} />
-          <nav className="topnav" aria-label="Pages">
-            <button className="linkish" onClick={onOpenCombos}>Winning combinations</button>
-            <button className="linkish" onClick={onOpenRanking}>Ranking</button>
-            <button className="linkish" onClick={onOpenRewards}>Rewards</button>
-            {isLineManager && <button className="linkish" onClick={onOpenRequests}>Request points</button>}
-            {isAdmin && <button className="linkish" onClick={() => onOpenAdmin()}>Back office</button>}
-            <button className="linkish" onClick={onSignOut}>Sign out</button>
-          </nav>
-        </div>
+        {nav}
       </header>
 
       <main className="stage">

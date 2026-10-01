@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   cancelPointRequest, fetchPointRequests, fetchRequestTargets, requestPoints,
@@ -5,14 +6,12 @@ import {
 } from '../lib/update1';
 
 interface Props {
-  email: string;
+  nav: ReactNode;
   userId: string;
-  onSignOut: () => void;
-  onBack: () => void;
 }
 
 /** Line managers only: ask the admins for free points for a player or for yourself. */
-export function RequestPointsPage({ email, userId, onSignOut, onBack }: Props) {
+export function RequestPointsPage({ nav, userId }: Props) {
   const [targets, setTargets] = useState<RequestTarget[]>([]);
   const [requests, setRequests] = useState<PointRequest[]>([]);
   const [who, setWho] = useState('');
@@ -83,11 +82,7 @@ export function RequestPointsPage({ email, userId, onSignOut, onBack }: Props) {
           <span className="brand-name">bluePi Slot</span>
           <span className="role-pill">free-point requests</span>
         </div>
-        <div className="who">
-          <span className="who-email">{email}</span>
-          <button className="linkish" onClick={onBack}>Back to the game</button>
-          <button className="linkish" onClick={onSignOut}>Sign out</button>
-        </div>
+        {nav}
       </header>
 
       <main className="admin narrow">

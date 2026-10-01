@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Wallets } from './Wallets';
 import {
@@ -7,10 +8,9 @@ import {
 import { fetchWallet, type Wallet } from '../lib/api';
 
 interface Props {
+  nav: ReactNode;
   email: string;
   isAdmin: boolean;
-  onSignOut: () => void;
-  onBack: () => void;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -25,7 +25,7 @@ function when(iso: string) {
     { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-export function RewardsPanel({ email, isAdmin, onSignOut, onBack }: Props) {
+export function RewardsPanel({ nav, email, isAdmin }: Props) {
   const [rewards, setRewards] = useState<RewardRow[]>([]);
   const [claims, setClaims] = useState<ClaimRow[]>([]);
   const [wallet, setWallet] = useState<Wallet>({ free_points: 0, points: 0 });
@@ -96,11 +96,7 @@ export function RewardsPanel({ email, isAdmin, onSignOut, onBack }: Props) {
           <span className="role-pill">rewards</span>
         </div>
         <Wallets freePoints={wallet.free_points} points={wallet.points} />
-        <div className="who">
-          <span className="who-email">{email}</span>
-          <button className="linkish" onClick={onBack}>Back to the game</button>
-          <button className="linkish" onClick={onSignOut}>Sign out</button>
-        </div>
+        {nav}
       </header>
 
       <main className="admin">

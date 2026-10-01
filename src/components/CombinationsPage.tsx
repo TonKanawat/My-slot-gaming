@@ -1,12 +1,12 @@
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchCombinations, symbolUrl, type CombinationRow, type SymbolRow } from '../lib/admin';
 import { fetchActiveSymbols } from '../lib/api';
 import { fetchLadder, type LadderRung } from '../lib/rules';
 
 interface Props {
-  email: string;
-  onSignOut: () => void;
-  onBack: () => void;
+  /** The shared top navigation. */
+  nav: ReactNode;
 }
 
 /** Two columns, ten rows — twenty groups a page. */
@@ -26,7 +26,7 @@ function pageNumbers(page: number, pages: number): (number | 'gap')[] {
   return out;
 }
 
-export function CombinationsPage({ email, onSignOut, onBack }: Props) {
+export function CombinationsPage({ nav }: Props) {
   const [groups, setGroups] = useState<CombinationRow[]>([]);
   const [symbols, setSymbols] = useState<SymbolRow[]>([]);
   const [ladder, setLadder] = useState<LadderRung[]>([]);
@@ -92,11 +92,7 @@ export function CombinationsPage({ email, onSignOut, onBack }: Props) {
           <span className="brand-name">bluePi Slot</span>
           <span className="role-pill">winning combinations</span>
         </div>
-        <div className="who">
-          <span className="who-email">{email}</span>
-          <button className="linkish" onClick={onBack}>Back to the game</button>
-          <button className="linkish" onClick={onSignOut}>Sign out</button>
-        </div>
+        {nav}
       </header>
 
       <main className="admin">
