@@ -945,3 +945,28 @@
 }
 .danger-btn:hover:not(:disabled) { transform: translateY(-1px); }
 .danger-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ---------------------------------------------------------------- required comment */
+.field > span .req {
+  font-style: normal; text-transform: none; letter-spacing: 0; font-size: .68rem;
+  font-weight: 700; color: var(--danger); margin-left: .35rem;
+}
+.field textarea {
+  font: inherit; font-size: .95rem; padding: .62rem .75rem; resize: vertical; min-height: 4.5rem;
+  border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); color: var(--ink);
+}
+.field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(75, 78, 196, .14); }
+.field textarea[aria-invalid='true'] { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(178, 58, 44, .12); }
+.field > .field-help {
+  display: flex; justify-content: space-between; gap: 1rem;
+  text-transform: none; letter-spacing: 0; font-size: .76rem; color: var(--ink-3);
+}
+.field-count { font-family: var(--font-num); flex: 0 0 auto; }
+.field-error { font-style: normal; font-size: .76rem; color: var(--danger); font-weight: 600; }
+.reqform-actions { align-items: center; gap: 1rem; flex-wrap: wrap; }
+.req-comment {
+  display: block; margin-top: .35rem; font-size: .84rem; color: var(--ink);
+  background: var(--surface); border-left: 3px solid var(--brand-1); border-radius: 0 8px 8px 0;
+  padding: .3rem .6rem; overflow-wrap: anywhere;
+}
+.req-comment i { color: var(--ink-3); }

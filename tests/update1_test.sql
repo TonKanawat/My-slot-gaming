@@ -200,11 +200,11 @@ begin
   perform slot.assert('it expires 72 hours later',
     round(extract(epoch from ((r->>'expires_at')::timestamptz - now())) / 3600), 72::numeric);
 
-  r := slot.request_points('22220000-0000-0000-0000-000000000002', 700, 'for me');
+  r := slot.request_points('22220000-0000-0000-0000-000000000002', 700, 'for running the demo');
   perform slot.assert('a manager can ask for themselves', (r->>'request_id') is not null, true);
 
-  perform slot.request_points('44440000-0000-0000-0000-000000000004', 50);
-  perform slot.request_points('44440000-0000-0000-0000-000000000004', 60);
+  perform slot.request_points('44440000-0000-0000-0000-000000000004', 50, 'Bug bash helper');
+  perform slot.request_points('44440000-0000-0000-0000-000000000004', 60, 'Bug bash winner');
 
   perform slot.assert('not for another line manager',
     slot.refused($q$select slot.request_points('23230000-0000-0000-0000-000000000023', 10)$q$, '42501'), true);

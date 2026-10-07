@@ -43,7 +43,18 @@ export function RequestPointsPage({ nav, userId }: Props) {
   );
   const chosen = targets.find((t) => t.id === who);
   const n = Number(amount);
-  const valid = chosen && Number.isInteger(n) && n > 0 && n <= 2147483647;
+  const amountOk = Number.isInteger(n) && n > 0 && n <= 2147483647;
+  // The comment is required: the admin decides on it, so it must say what the
+  // points are for. Same rule as the database: 5–300 characters, spaces trimmed.
+  const noteLen = note.replace(/\s+/g, ' ').trim().length;
+  const noteOk = noteLen >= 5 && noteLen <= 300;
+  const [touched, setTouched] = useState({ amount: false, note: false });
+  const valid = Boolean(chosen) && amountOk && noteOk;
+  const missing = [
+    !chosen && 'who it is for',
+    !amountOk && 'the number of free points',
+    !noteOk && 'a comment',
+  ].filter(Boolean) as string[];
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -53,7 +64,7 @@ export function RequestPointsPage({ nav, userId }: Props) {
       await requestPoints(chosen.id, n, note.trim());
       setNotice(`Sent: ${n.toLocaleString()} free points for ${chosen.is_self ? 'yourself' : chosen.name}. `
         + 'An admin has 72 hours to approve it.');
-      setAmount(''); setNote('');
+      setAmount(''); setNote(''); setTouched({ amount: false, note: false });
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not send that request.');
@@ -98,7 +109,7 @@ export function RequestPointsPage({ nav, userId }: Props) {
           </p>
 
           <label className="field">
-            <span>For</span>
+            <span>For <em className="req">required</em></span>
             {targets.length > 8 && (
               <input type="search" className="picksearch" value={find}
                      onChange={(e) => setFind(e.target.value)}
@@ -115,18 +126,36 @@ export function RequestPointsPage({ nav, userId }: Props) {
           </label>
 
           <label className="field">
-            <span>Free points</span>
+            <span>Free points <em className="req">required</em></span>
             <input type="number" min={1} step={1} inputMode="numeric" value={amount}
-                   onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 500" required />
+                   onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 500" required
+                   onBlur={() => setTouched((t) => ({ ...t, amount: true }))}
+                   aria-invalid={touched.amount && !amountOk} />
+            {touched.amount && !amountOk && (
+              <em className="field-error">Enter a whole number of at least 1.</em>
+            )}
           </label>
 
           <label className="field">
-            <span>Reason <small>(optional, the admin sees it)</small></span>
-            <input value={note} maxLength={300} onChange={(e) => setNote(e.target.value)}
-                   placeholder="e.g. Sprint demo winner" />
+            <span>Comment <em className="req">required</em></span>
+            <textarea value={note} maxLength={300} rows={3} required
+                      onChange={(e) => setNote(e.target.value)}
+                      onBlur={() => setTouched((t) => ({ ...t, note: true }))}
+                      aria-invalid={touched.note && !noteOk}
+                      aria-describedby="req-note-help"
+                      placeholder="What are these points for? e.g. Won the sprint demo vote" />
+            <span id="req-note-help" className="field-help">
+              {touched.note && !noteOk
+                ? <em className="field-error">Please describe what the points are for — at least 5 characters.</em>
+                : <>The admin reads this before approving. At least 5 characters.</>}
+              <span className="field-count">{noteLen}/300</span>
+            </span>
           </label>
 
           <div className="reqform-actions">
+            {!valid && missing.length > 0 && (
+              <span className="hint">Still needed: {missing.join(', ')}.</span>
+            )}
             <button className="spin small" type="submit" disabled={!valid || busy !== null}>
               {busy === 'send' ? 'Sending…' : 'Send request'}
             </button>
@@ -143,8 +172,8 @@ export function RequestPointsPage({ nav, userId }: Props) {
                     <b>{r.amount.toLocaleString()} free points · {r.is_self ? 'for you' : `for ${r.target}`}</b>
                     <span className="claim-meta">
                       sent {when(r.created_at)} · {timeLeft(r.hours_left)}
-                      {r.note && <> · “{r.note}”</>}
                     </span>
+                    {r.note && <span className="req-comment">“{r.note}”</span>}
                   </div>
                   <button className="linkish danger" disabled={busy !== null} onClick={() => cancel(r)}>
                     {busy === `c${r.id}` ? 'Cancelling…' : 'Cancel'}

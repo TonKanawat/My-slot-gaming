@@ -95,7 +95,9 @@ export function FreePointsTab({ onPendingChange }: { onPendingChange?: (n: numbe
                   </b>
                   <span className="claim-meta">
                     asked by {r.requester} ({r.requester_email}) · {when(r.created_at)}
-                    {r.note && <> · “{r.note}”</>}
+                  </span>
+                  <span className="req-comment">
+                    {r.note ? <>Comment: “{r.note}”</> : <i>No comment (sent before comments were required)</i>}
                   </span>
                   <span className="req-deadline">
                     {r.reminder && <span className="reminder-pill">{r.reminder} warning</span>}
