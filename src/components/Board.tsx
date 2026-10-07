@@ -12,8 +12,8 @@ interface Props {
   pool: SymbolRow[];
   spinToken: number;
   winningLines: WinningLine[];
-  /** A payline id to show on its own (hovering its entry in the legend). */
-  highlighted: number | null;
+  /** Paylines pinned in the legend. Empty means show every winning line. */
+  highlighted: number[];
   onAllSettled?: () => void;
 }
 
@@ -29,7 +29,7 @@ export function Board({ grid, byId, pool, spinToken, winningLines, highlighted, 
   const shown = useMemo(
     () => winningLines
       .map((l, i) => ({ line: l, index: i }))
-      .filter(({ line }) => highlighted === null || line.payline === highlighted),
+      .filter(({ line }) => highlighted.length === 0 || highlighted.includes(line.payline)),
     [winningLines, highlighted],
   );
 
@@ -72,7 +72,7 @@ export function Board({ grid, byId, pool, spinToken, winningLines, highlighted, 
               const pl = PAYLINE_BY_ID.get(line.payline);
               if (!pl) return null;
               // Lines that share cells are nudged apart a little so both stay visible.
-              const nudge = highlighted !== null ? 0 : ((index % 5) - 2) * 0.045;
+              const nudge = highlighted.length === 1 ? 0 : ((index % 5) - 2) * 0.045;
               let cells = pl.cells.map(([r, c]) => [c + 0.5 + nudge, r + 0.5 + nudge]);
               // The corner line is four separate cells: trace it round the board.
               if (pl.family === 'corner') cells = [cells[0], cells[1], cells[3], cells[2], cells[0]];

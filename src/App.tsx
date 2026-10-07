@@ -19,7 +19,7 @@ import {
 import { supabase } from './lib/supabase';
 import { useSession } from './lib/session';
 import {
-  fetchActiveSymbols, fetchFreeSpins, fetchReadiness, fetchWallet, play,
+  fetchActiveSymbols, fetchCombinationNames, fetchFreeSpins, fetchReadiness, fetchWallet, play,
   NO_FREE_SPINS,
   type FreeSpins, type Readiness, type SpinResult, type Wallet,
 } from './lib/api';
@@ -178,7 +178,9 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   // The line being pointed at in the legend, shown on its own on the board.
-  const [focusLine, setFocusLine] = useState<number | null>(null);
+  // Lines pinned in the legend; they stay on the board until unpinned or the next spin.
+  const [pinned, setPinned] = useState<number[]>([]);
+  const [comboNames, setComboNames] = useState<Map<string, string>>(new Map());
   const [schedule, setSchedule] = useState<GrantSchedule | null>(null);
   // Admins: free-point requests waiting, and how many are close to expiring.
   const [waiting, setWaiting] = useState<{ n: number; urgent: number }>({ n: 0, urgent: 0 });
@@ -207,6 +209,8 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
   // Load the real symbols and the real balance before anything is shown.
   useEffect(() => {
     let alive = true;
+    // Group names are only for labels: a failure here must not block the game.
+    fetchCombinationNames().then((m) => { if (alive) setComboNames(m); }).catch(() => undefined);
     Promise.all([fetchActiveSymbols(), fetchWallet(), fetchFreeSpins()])
       .then(([syms, w, fs]) => {
         if (!alive) return;
@@ -233,7 +237,11 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
     try {
       const r = await play(bet);
       setResult(r);
-      setFocusLine(null);
+      setPinned([]);
+      // A group added since the page loaded has no name here yet: fetch again.
+      if (r.lines.some((l) => !comboNames.has(l.combination))) {
+        fetchCombinationNames().then(setComboNames).catch(() => undefined);
+      }
       setGrid(r.grid);
       setWallet({ free_points: r.free_points, points: r.points });
       setFreeSpins((prev) => ({
@@ -248,7 +256,7 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
       setSpinning(false);
       setMessage(err instanceof Error ? err.message : 'That spin could not be played.');
     }
-  }, [spinning, bet, affordable, freeSpinsLeft]);
+  }, [spinning, bet, affordable, freeSpinsLeft, comboNames]);
 
   if (loading) return <Notice title="Loading…" />;
 
@@ -277,7 +285,7 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
         <div className="play-area">
           <Board
             grid={grid} byId={byId} pool={symbols} spinToken={spinToken}
-            winningLines={result?.lines ?? []} highlighted={focusLine}
+            winningLines={result?.lines ?? []} highlighted={pinned}
             onAllSettled={() => setSpinning(false)}
           />
 
@@ -323,10 +331,11 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
             ) : (
               <p>No winning lines this time.{result.was_free_spin && <span className="tag rule">free spin</span>}</p>
             )}
-            {result.lines.length > 1 && (
-              <p className="hint legend-hint">Each winning line has its own colour. Point at one to see it alone.</p>
-            )}
-            <LineLegend lines={result.lines} active={focusLine} onHover={setFocusLine} />
+            <LineLegend
+              lines={result.lines} names={comboNames} pinned={pinned}
+              onToggle={(p) => setPinned((cur) => cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p])}
+              onClear={() => setPinned([])}
+            />
             <WhyPanel grid={result.grid} />
           </div>
         )}

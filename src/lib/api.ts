@@ -114,3 +114,11 @@ export async function explainGrid(grid: string[][]): Promise<LineExplanation[]> 
   if (error) throw new Error(error.message);
   return data as LineExplanation[];
 }
+
+/** Winning-group names by id, archived groups included: a spin reports the group
+ *  it matched by id, and the result panel needs to say which group that was. */
+export async function fetchCombinationNames(): Promise<Map<string, string>> {
+  const { data, error } = await client().from('winning_combinations').select('id, name');
+  if (error) throw new Error(error.message);
+  return new Map(((data ?? []) as { id: string; name: string }[]).map((c) => [c.id, c.name]));
+}

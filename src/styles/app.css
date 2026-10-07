@@ -970,3 +970,17 @@
   padding: .3rem .6rem; overflow-wrap: anywhere;
 }
 .req-comment i { color: var(--ink-3); }
+
+/* ---------------------------------------------------------------- pinned lines */
+.legend-wrap { margin-top: .55rem; }
+.legend-wrap .legend-hint { margin: 0; }
+.legend-hint .linkish { padding: 0; font-size: inherit; }
+.legend-item { align-items: center; }
+.legend-item .swatch { margin-top: 0; align-self: flex-start; margin-top: .42rem; }
+.legend-item[data-on='true'] {
+  border-color: var(--accent); box-shadow: 0 0 0 2px rgba(75, 78, 196, .18), var(--shadow-1);
+  background: #F4F4FF;
+}
+.legend-pin { margin-left: auto; flex: 0 0 auto; font-size: .8rem; color: var(--ink-3); }
+.legend-item[data-on='true'] .legend-pin { color: var(--accent); }
+.legend-group { font-weight: 600; color: var(--ink); }
