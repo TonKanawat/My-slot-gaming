@@ -144,6 +144,13 @@ export function SymbolsTab({ symbols, combinations, onChanged }: Props) {
                    onChange={(e) => setRounds(Number(e.target.value))} />
           </label>
         )}
+        {kind === 'scatter' && (
+          <p className="notice-line">
+            <b>Pays only on a winning line.</b> A scatter gives its free spins only when it
+            lands on a payline that wins, so it must be in a winning group — a scatter in
+            no group never pays.
+          </p>
+        )}
 
         <p className="hint">
           {kind === 'scatter'

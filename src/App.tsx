@@ -180,6 +180,9 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
   // The line being pointed at in the legend, shown on its own on the board.
   // Lines pinned in the legend; they stay on the board until unpinned or the next spin.
   const [pinned, setPinned] = useState<number[]>([]);
+  // Whether a Yellow Card was in force when the last spin was played: scatters on a
+  // winning line then pay nothing, and the result should say so.
+  const [bannedAtSpin, setBannedAtSpin] = useState(false);
   const [comboNames, setComboNames] = useState<Map<string, string>>(new Map());
   const [schedule, setSchedule] = useState<GrantSchedule | null>(null);
   // Admins: free-point requests waiting, and how many are close to expiring.
@@ -235,7 +238,9 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
     setMessage(null);
     setSpinning(true);
     try {
+      const wasBanned = freeSpins.ban_bets_left > 0;
       const r = await play(bet);
+      setBannedAtSpin(wasBanned);
       setResult(r);
       setPinned([]);
       // A group added since the page loaded has no name here yet: fetch again.
@@ -256,7 +261,7 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
       setSpinning(false);
       setMessage(err instanceof Error ? err.message : 'That spin could not be played.');
     }
-  }, [spinning, bet, affordable, freeSpinsLeft, comboNames]);
+  }, [spinning, bet, affordable, freeSpinsLeft, comboNames, freeSpins.ban_bets_left]);
 
   if (loading) return <Notice title="Loading…" />;
 
@@ -331,6 +336,7 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
             ) : (
               <p>No winning lines this time.{result.was_free_spin && <span className="tag rule">free spin</span>}</p>
             )}
+            <ScatterNote result={result} banned={bannedAtSpin} />
             <LineLegend
               lines={result.lines} names={comboNames} pinned={pinned}
               onToggle={(p) => setPinned((cur) => cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p])}
@@ -343,5 +349,42 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
         {message && <p className="message" role="status">{message}</p>}
       </main>
     </div>
+  );
+}
+
+/** Why this spin did or didn't give free spins. Scatters pay only when they sit on
+ *  a winning line, which is easy to miss, so the result says it in words. */
+function ScatterNote({ result, banned }: { result: SpinResult; banned: boolean }) {
+  const paid = result.scatters_paid ?? [];
+  const missed = result.scatters_missed ?? 0;
+  if (paid.length === 0 && missed === 0) return null;
+
+  const who = paid.map((p) => `${p.name} (+${p.spins})`).join(', ');
+  const capped = (result.free_spins_raw ?? 0) > result.free_spins;
+
+  return (
+    <p className="scatter-note" data-kind={paid.length > 0 && !banned ? 'paid' : 'missed'}>
+      {paid.length > 0 && !banned && (
+        <>
+          <b>+{result.free_spins} free {result.free_spins === 1 ? 'spin' : 'spins'}</b>
+          {' — '}scatter on a winning line: {who}
+          {capped && <> · capped at {result.free_spins} per spin</>}
+        </>
+      )}
+      {paid.length > 0 && banned && (
+        <>Scatter on a winning line ({who}), but the <b>Yellow card</b> blocks free spins for now.</>
+      )}
+      {paid.length === 0 && missed > 0 && (
+        <>
+          {missed === 1 ? 'A scatter landed' : `${missed} scatters landed`} off the winning lines
+          {' — '}scatters give free spins only when they are on a winning line.
+        </>
+      )}
+      {paid.length > 0 && missed > 0 && (
+        <span className="scatter-also">
+          {' · '}{missed} other {missed === 1 ? 'scatter was' : 'scatters were'} off the winning lines and paid nothing
+        </span>
+      )}
+    </p>
   );
 }

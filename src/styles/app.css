@@ -984,3 +984,13 @@
 .legend-pin { margin-left: auto; flex: 0 0 auto; font-size: .8rem; color: var(--ink-3); }
 .legend-item[data-on='true'] .legend-pin { color: var(--accent); }
 .legend-group { font-weight: 600; color: var(--ink); }
+
+/* ---------------------------------------------------------------- scatter result */
+.scatter-note {
+  margin: .5rem 0 0 !important; font-size: .86rem; line-height: 1.45;
+  border-radius: 10px; padding: .45rem .7rem; background: var(--surface);
+  border: 1px solid var(--line); color: var(--ink-2);
+}
+.scatter-note[data-kind='paid'] { border-color: var(--danger); color: var(--ink); }
+.scatter-note[data-kind='paid'] b { color: var(--danger); }
+.scatter-also { color: var(--ink-3); }

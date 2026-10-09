@@ -170,38 +170,106 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------- scatter
+-- 0027: a scatter pays only from a cell on a WINNING line. For a scatter to be on
+-- a winning line it has to be in a group, so a small group "Lucky" (SCAT, S10, S11,
+-- repeats allowed) is added just for these checks. Filler cells are all S01, which
+-- can never win (PIG Team needs five different symbols).
+insert into slot.combination (name, bonus) values ('Lucky', 0);
+insert into slot.combination_symbol
+select (select id from slot.combination where name='Lucky'), id
+  from slot.symbol where name in ('SCAT','S10','S11');
+
+do $$
+declare g uuid[]; res jsonb;
+begin
+  -- On a winning line (row 1 is all Lucky): pays its 5.
+  g := slot.grid_of(array[
+    'SCAT','S10','S11','S10','S11',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01']);
+  res := slot.evaluate_grid(g);
+  perform slot.assert('a scatter on a winning line pays its rounds', (res->>'free_spins')::int, 5);
+  perform slot.assert('and is listed as paid', jsonb_array_length(res->'scatters_paid'), 1);
+  perform slot.assert('naming the scatter', res->'scatters_paid'->0->>'name', 'SCAT');
+  perform slot.assert('at its cell', (res->'scatters_paid'->0->>'row')::int * 10
+                                     + (res->'scatters_paid'->0->>'col')::int, 0);
+
+  -- Off the winning lines: row 1 still wins, but the scatter sits in the middle of
+  -- S01s, on no winning line. Under the old rule this paid 5; now it pays nothing.
+  g := slot.grid_of(array[
+    'S10','S11','S10','S11','S10',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','SCAT','S01','S01',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01']);
+  res := slot.evaluate_grid(g);
+  perform slot.assert('the board still has a winning line', ((res->>'line_count')::int > 0), true);
+  perform slot.assert('a scatter off the winning lines pays nothing', (res->>'free_spins')::int, 0);
+  perform slot.assert('and is counted as missed', (res->>'scatters_missed')::int, 1);
+
+  -- No winning line at all: nothing, however many scatters land.
+  g := slot.grid_of(array[
+    'SCAT','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','SCAT','S01','S01',
+    'S01','S01','S01','S01','S01',
+    'S01','SCAT','S01','S01','S01']);
+  res := slot.evaluate_grid(g);
+  perform slot.assert('no line wins on this board', (res->>'line_count')::int, 0);
+  perform slot.assert('no winning line, no free spins', (res->>'free_spins')::int, 0);
+  perform slot.assert('all three scatters missed', (res->>'scatters_missed')::int, 3);
+
+  -- One scatter crossed by two winning lines (row 1 and column 1) pays ONCE.
+  g := slot.grid_of(array[
+    'SCAT','S10','S11','S10','S11',
+    'S10', 'S01','S01','S01','S01',
+    'S11', 'S01','S01','S01','S01',
+    'S10', 'S01','S01','S01','S01',
+    'S11', 'S01','S01','S01','S01']);
+  res := slot.evaluate_grid(g);
+  perform slot.assert('two winning lines cross the scatter', (res->>'line_count')::int, 2);
+  perform slot.assert('but its cell pays once', (res->>'free_spins')::int, 5);
+
+  -- Two scatters on the winning line: 10, right on the ceiling.
+  g := slot.grid_of(array[
+    'SCAT','S10','SCAT','S11','S10',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01']);
+  res := slot.evaluate_grid(g);
+  perform slot.assert('two scatters on the line award 10', (res->>'free_spins')::int, 10);
+
+  -- Three on the line: 15 earned, ceilinged at 10 (per position, as before).
+  g := slot.grid_of(array[
+    'SCAT','SCAT','SCAT','S10','S11',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01']);
+  res := slot.evaluate_grid(g);
+  perform slot.assert('three scatters earn per position', (res->>'free_spins_raw')::int, 15);
+  perform slot.assert('and are ceilinged at 10',          (res->>'free_spins')::int, 10);
+end $$;
+
+-- A scatter in NO group can never be on a winning line, so it never pays.
+delete from slot.combination_symbol
+ where combination_id = (select id from slot.combination where name = 'Lucky');
+delete from slot.combination where name = 'Lucky';
 do $$
 declare g uuid[]; res jsonb;
 begin
   g := slot.grid_of(array[
-    'SCAT','S02','S03','S04','S06',
-    'S01','S02','S03','S04','S06',
-    'S01','S02','S03','S04','S06',
-    'S01','S02','S03','S04','S06',
-    'S01','S02','S03','S04','S06']);
+    'SCAT','S10','S11','S10','S11',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01',
+    'S01','S01','S01','S01','S01']);
   res := slot.evaluate_grid(g);
-  perform slot.assert('one scatter pays its rounds', (res->>'free_spins')::int, 5);
-
-  -- Q6: scatters pay per POSITION. Three of them at 5 each is 15, ceilinged to 10.
-  g := slot.grid_of(array[
-    'SCAT','S02','S03','S04','S06',
-    'S01','SCAT','S03','S04','S06',
-    'S01','S02','SCAT','S04','S06',
-    'S01','S02','S03','S04','S06',
-    'S01','S02','S03','S04','S06']);
-  res := slot.evaluate_grid(g);
-  perform slot.assert('three scatters award per position', (res->>'free_spins_raw')::int, 15);
-  perform slot.assert('and are ceilinged at 10',          (res->>'free_spins')::int, 10);
-
-  -- Two scatters: 10 exactly, right on the ceiling.
-  g := slot.grid_of(array[
-    'SCAT','S02','S03','S04','S06',
-    'S01','SCAT','S03','S04','S06',
-    'S01','S02','S03','S04','S06',
-    'S01','S02','S03','S04','S06',
-    'S01','S02','S03','S04','S06']);
-  res := slot.evaluate_grid(g);
-  perform slot.assert('two scatters award 10', (res->>'free_spins')::int, 10);
+  perform slot.assert('a scatter in no group breaks the line and pays nothing',
+    (res->>'free_spins')::int, 0);
 end $$;
 
 -- ---------------------------------------------------------------- Q2: the x6 ceiling

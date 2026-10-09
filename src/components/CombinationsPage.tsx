@@ -111,6 +111,7 @@ export function CombinationsPage({ nav }: Props) {
             A group of five or more needs five <b>different</b> symbols; a group of one
             to four accepts repeats. A wild stands in for whatever member is missing,
             and a line matching several groups pays once, at the best multiplier.
+            A <b>scatter</b> gives its free spins only when it is on a winning line.
           </p>
 
           {groups.length > 0 && (

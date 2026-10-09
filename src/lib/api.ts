@@ -34,6 +34,12 @@ export interface SpinResult {
   free_points: number;
   points: number;
   free_spins: number;
+  /** Before the per-spin cap. */
+  free_spins_raw?: number;
+  /** Scatters that sat on a winning line and so paid (0027). */
+  scatters_paid?: { row: number; col: number; symbol: string; name: string; spins: number }[];
+  /** Scatters that landed off every winning line and paid nothing. */
+  scatters_missed?: number;
   free_spins_left: number;
   free_spin_round: number;
   chain_ended: boolean;
