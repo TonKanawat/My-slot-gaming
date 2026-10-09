@@ -1,3 +1,11 @@
+-- ============================================================================
+-- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
+-- Later files replaced parts of it. Running it again would silently put these
+-- old versions back over the current ones:
+--   slot.register_email  → current version is in 0024_name_duplicates.sql
+-- Kept as history only. See supabase/README.md.
+-- ============================================================================
+
 -- bluePi Slot — 0020 the admin can register any address
 --
 -- The original rule limited accounts to @bluepi.co.th, enforced by a check

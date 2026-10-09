@@ -1,3 +1,10 @@
+-- ============================================================================
+-- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
+-- It would reset every payout-ladder multiplier to its original value,
+-- wiping anything changed since in Back office → Payout rules.
+-- Kept as history only. See supabase/README.md.
+-- ============================================================================
+
 -- bluePi Slot — 0016 restore the paylines, and never lose them silently again
 --
 -- Symptom: every spin reported "no winning line", and slot.explain_grid returned an

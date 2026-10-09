@@ -1,3 +1,12 @@
+-- ============================================================================
+-- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
+-- Later files replaced parts of it. Running it again would silently put these
+-- old versions back over the current ones:
+--   slot.evaluate_grid  → current version is in 0027_scatter_on_winning_line.sql
+-- It would also bring back the old scatter rule (scatters paying anywhere).
+-- Kept as history only. See supabase/README.md.
+-- ============================================================================
+
 -- bluePi Slot — 0004 rule decisions
 -- Confirmed by M, 2026-08-26. Each block notes which open question it closes.
 

@@ -1,3 +1,14 @@
+-- ============================================================================
+-- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
+-- Later files replaced parts of it. Running it again would silently put these
+-- old versions back over the current ones:
+--   slot.spin        → current version is in 0022_storage_diet.sql
+--   slot.game_ready  → current version is in 0016_restore_paylines.sql
+-- The old spin does not write the spin log, so spins would silently stop being
+-- recorded (and the storage clean-up would have nothing to do) until 0022 is run again.
+-- Kept as history only. See supabase/README.md.
+-- ============================================================================
+
 -- bluePi Slot — 0008
 -- Three decisions from M: the Play Dashboard is public, the game refuses to run
 -- until it has been configured, and the master account is seeded.

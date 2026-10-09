@@ -1,3 +1,13 @@
+-- ============================================================================
+-- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
+-- Later files replaced parts of it. Running it again would silently put these
+-- old versions back over the current ones:
+--   slot.spin  → current version is in 0022_storage_diet.sql
+-- The old spin does not write the spin log, so spins would silently stop being
+-- recorded (and the storage clean-up would have nothing to do) until 0022 is run again.
+-- Kept as history only. See supabase/README.md.
+-- ============================================================================
+
 -- bluePi Slot — 0014 make the board playable for real
 --
 -- Three things the front end needed and could not get:

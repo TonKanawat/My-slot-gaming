@@ -1,3 +1,16 @@
+-- ============================================================================
+-- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
+-- Later files replaced parts of it. Running it again would silently put these
+-- old versions back over the current ones:
+--   slot.claim_account      → current version is in 0023_update_1.sql
+--   slot.grant_free_points  → current version is in 0023_update_1.sql
+--   slot.register_email     → current version is in 0024_name_duplicates.sql
+-- It would also switch the daily free-point job back to Mon/Wed/Fri only, and
+-- that job would then FAIL ("grant_free_points() is not unique"), so nobody
+-- would receive automatic free points until 0023 is run again.
+-- Kept as history only. See supabase/README.md.
+-- ============================================================================
+
 -- bluePi Slot — 0007 accounts, admin powers, scheduled free points
 
 -- ---------------------------------------------------------------- first login

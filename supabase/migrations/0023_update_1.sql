@@ -1,3 +1,12 @@
+-- ============================================================================
+-- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
+-- Later files replaced parts of it. Running it again would silently put these
+-- old versions back over the current ones:
+--   slot.set_display_name  → current version is in 0024_name_duplicates.sql
+--   slot.request_points    → current version is in 0026_request_reason_required.sql
+-- Kept as history only. See supabase/README.md.
+-- ============================================================================
+
 -- bluePi Slot — 0023 "Update 1"
 --
 --   * Everyone can set their own display name.

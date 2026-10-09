@@ -1,3 +1,14 @@
+-- ============================================================================
+-- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
+-- Later files replaced parts of it. Running it again would silently put these
+-- old versions back over the current ones:
+--   slot.spin          → current version is in 0022_storage_diet.sql
+--   slot.explain_grid  → current version is in 0018_explain_wilds.sql
+-- The old spin writes to spin-log columns that no longer exist, so every spin
+-- would fail until 0022 is run again.
+-- Kept as history only. See supabase/README.md.
+-- ============================================================================
+
 -- bluePi Slot — 0015 explain a spin, and keep a record of it
 --
 -- "That line definitely won and the game said no" is unanswerable today: the grid

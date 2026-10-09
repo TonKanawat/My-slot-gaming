@@ -289,10 +289,15 @@ begin
 end $$;
 
 -- The exact bug from sign-in: a null grant must never reach the wallet.
+-- (Since 0028 functions are not open to PUBLIC; signed-in users get them through
+-- the authenticated role, which slot_client stands in for here.)
+grant execute on function slot.setting_int(text) to slot_client;
 set slot.test_user = '';
 do $$
 declare v numeric;
 begin
+  -- setting_int is security definer, so a caller who is not signed in to the game
+  -- still reads the setting (row-level security on slot.setting would hide it).
   set local role slot_client;
   v := slot.setting_int('first_login_grant');
   perform slot.assert('a signed-out caller still reads settings', v, 500::numeric);

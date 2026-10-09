@@ -1,3 +1,13 @@
+-- ============================================================================
+-- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
+-- Later files replaced parts of it. Running it again would silently put these
+-- old versions back over the current ones:
+--   slot.setting_int, slot.setting_bool  → current version is in 0011_fix_setting_lookup.sql
+--   slot.evaluate_grid                   → current version is in 0027_scatter_on_winning_line.sql
+-- It would also bring back the old scatter rule (scatters paying anywhere).
+-- Kept as history only. See supabase/README.md.
+-- ============================================================================
+
 -- bluePi Slot — 0003 win engine
 -- Pure evaluation: given a 5x5 grid of symbol ids, work out which paylines win,
 -- what the multiplier is, and how many free spins the scatters award.

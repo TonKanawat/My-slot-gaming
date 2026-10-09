@@ -1,3 +1,10 @@
+-- ============================================================================
+-- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
+-- It would also reset every payout-ladder multiplier to its original value,
+-- wiping anything changed since in Back office → Payout rules.
+-- Kept as history only. See supabase/README.md.
+-- ============================================================================
+
 -- bluePi Slot — 0002 seed: the 29 paylines and the payout ladder.
 -- Generated from the requirements doc's cell highlighting. Do not hand-edit.
 
