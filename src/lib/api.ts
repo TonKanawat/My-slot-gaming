@@ -27,6 +27,10 @@ export interface SpinResult {
   base: number;
   multiplier: number;
   payout: number;
+  /** The payout before any promotion (0029). */
+  base_payout?: number;
+  /** The slot promotion that boosted this win, if one was running. */
+  promo?: { id: string; name: string; extra: number; bonus: number; base_payout: number } | null;
   bet: number;
   was_free_spin: boolean;
   paid_from_free: number;

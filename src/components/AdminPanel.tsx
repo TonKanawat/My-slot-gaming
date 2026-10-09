@@ -6,6 +6,7 @@ import { PlayersTab } from './admin/PlayersTab';
 import { RulesTab } from './admin/RulesTab';
 import { SystemTab } from './admin/SystemTab';
 import { FreePointsTab } from './admin/FreePointsTab';
+import { PromotionsTab } from './admin/PromotionsTab';
 import { fetchPointRequests } from '../lib/update1';
 import {
   fetchCombinations, fetchPlayers, fetchSymbols,
@@ -19,7 +20,7 @@ interface Props {
   initialTab?: Tab;
 }
 
-export type Tab = 'symbols' | 'combinations' | 'players' | 'rules' | 'freepoints' | 'system';
+export type Tab = 'symbols' | 'combinations' | 'players' | 'rules' | 'freepoints' | 'promotions' | 'system';
 
 export function AdminPanel({ nav, onReadinessChange, initialTab }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab ?? 'symbols');
@@ -101,6 +102,11 @@ export function AdminPanel({ nav, onReadinessChange, initialTab }: Props) {
             Free points
             {pendingRequests > 0 && <span className="count alert">{pendingRequests}</span>}
           </button>
+          <button role="tab" aria-selected={tab === 'promotions'}
+                  data-on={tab === 'promotions' ? 'true' : undefined}
+                  onClick={() => setTab('promotions')}>
+            Promotions
+          </button>
           <button role="tab" aria-selected={tab === 'system'}
                   data-on={tab === 'system' ? 'true' : undefined}
                   onClick={() => setTab('system')}>
@@ -121,6 +127,7 @@ export function AdminPanel({ nav, onReadinessChange, initialTab }: Props) {
           <CombinationsTab symbols={symbols} combinations={combinations} onChanged={reload} />}
         {tab === 'rules' && <RulesTab onChanged={reload} />}
         {tab === 'freepoints' && <FreePointsTab onPendingChange={setPendingRequests} />}
+        {tab === 'promotions' && <PromotionsTab />}
         {tab === 'system' && <SystemTab />}
         {tab === 'players' && <PlayersTab players={players} onChanged={reload} />}
       </main>

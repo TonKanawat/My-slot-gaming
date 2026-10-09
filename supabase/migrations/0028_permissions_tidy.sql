@@ -1,3 +1,11 @@
+-- ============================================================================
+-- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
+-- Since 0029 these rules live in slot.tidy_permissions(), which knows about the
+-- newer internal functions. To re-apply permissions, run instead:
+--     select slot.tidy_permissions();
+-- Kept as history only. See supabase/README.md.
+-- ============================================================================
+
 -- bluePi Slot — 0028 permissions and search-path tidy-up
 --
 -- No change to how the game plays. Two things the review found:

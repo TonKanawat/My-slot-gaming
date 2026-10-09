@@ -2,7 +2,8 @@
 -- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
 -- Later files replaced parts of it. Running it again would silently put these
 -- old versions back over the current ones:
---   slot.spin  → current version is in 0022_storage_diet.sql
+--   slot.spin        → current version is in 0022_storage_diet.sql
+--   slot.apply_spin  → current version is in 0029_promotions.sql (pays promotions)
 -- The old spin does not write the spin log, so spins would silently stop being
 -- recorded (and the storage clean-up would have nothing to do) until 0022 is run again.
 -- Kept as history only. See supabase/README.md.

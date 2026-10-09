@@ -12,6 +12,8 @@ import { RankingPage } from './components/RankingPage';
 import { RequestPointsPage } from './components/RequestPointsPage';
 import { TopNav, type View } from './components/TopNav';
 import { LineLegend } from './components/LineLegend';
+import { LiveBoostChip, PromoBanner } from './components/PromoBanner';
+import { dismissPromotions, fetchPromotions, type Promotion } from './lib/promotions';
 import type { Tab as AdminTab } from './components/AdminPanel';
 import {
   fetchGrantSchedule, fetchPointRequests, weekday, type GrantSchedule,
@@ -187,6 +189,17 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
   const [schedule, setSchedule] = useState<GrantSchedule | null>(null);
   // Admins: free-point requests waiting, and how many are close to expiring.
   const [waiting, setWaiting] = useState<{ n: number; urgent: number }>({ n: 0, urgent: 0 });
+  // Promotions: the home-page label and the live-boost chip. Re-read every minute
+  // so a promotion that starts or ends while the page is open shows up.
+  const [promos, setPromos] = useState<Promotion[]>([]);
+  const loadPromos = useCallback(() => {
+    fetchPromotions().then(setPromos).catch(() => undefined);
+  }, []);
+  useEffect(() => {
+    loadPromos();
+    const t = window.setInterval(loadPromos, 60_000);
+    return () => window.clearInterval(t);
+  }, [loadPromos]);
 
   useEffect(() => {
     fetchGrantSchedule().then(setSchedule).catch(() => setSchedule(null));
@@ -277,6 +290,10 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
       </header>
 
       <main className="stage">
+        <PromoBanner
+          promos={promos}
+          onDismiss={async (ids) => { await dismissPromotions(ids); loadPromos(); }}
+        />
         {isAdmin && waiting.n > 0 && (
           <button className="req-banner" onClick={() => onOpenAdmin('freepoints')}
                   data-urgent={waiting.urgent > 0 ? 'true' : undefined}>
@@ -303,6 +320,7 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
             <button className="spin" onClick={spin} disabled={spinning}>
               {spinning ? 'Spinning…' : freeSpinsLeft > 0 ? `Free spin (${freeSpinsLeft})` : 'Spin'}
             </button>
+            <LiveBoostChip promos={promos} />
           </div>
         </div>
 
@@ -331,6 +349,12 @@ function Game({ nav, isAdmin, onOpenAdmin }: {
                 <b>{result.line_count} winning {result.line_count === 1 ? 'line' : 'lines'}</b>
                 {' · '}×{result.multiplier}
                 {' · '}<b>+{result.payout.toLocaleString()} points</b>
+                {result.promo && (
+                  <span className="promo-gain">
+                    {' '}({result.promo.base_payout.toLocaleString()} + <b>{result.promo.bonus.toLocaleString()}</b>
+                    {' '}🔥 {result.promo.name} x{Number(result.promo.extra).toLocaleString(undefined, { maximumFractionDigits: 2 })})
+                  </span>
+                )}
                 {result.was_free_spin && <span className="tag rule">free spin</span>}
               </p>
             ) : (

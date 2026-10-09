@@ -6,6 +6,7 @@ import {
   saveReward, type ClaimRow, type RewardRow,
 } from '../lib/rewards';
 import { fetchWallet, type Wallet } from '../lib/api';
+import { day, fetchRewardPrices, type RewardPrice } from '../lib/promotions';
 
 interface Props {
   nav: ReactNode;
@@ -29,13 +30,19 @@ export function RewardsPanel({ nav, email, isAdmin }: Props) {
   const [rewards, setRewards] = useState<RewardRow[]>([]);
   const [claims, setClaims] = useState<ClaimRow[]>([]);
   const [wallet, setWallet] = useState<Wallet>({ free_points: 0, points: 0 });
+  // Today's prices, with any sale (0029). Falls back to list prices if unavailable.
+  const [prices, setPrices] = useState<Map<string, RewardPrice>>(new Map());
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     try {
-      const [r, c, w] = await Promise.all([fetchRewards(), fetchClaims(), fetchWallet()]);
+      const [r, c, w, p] = await Promise.all([
+        fetchRewards(), fetchClaims(), fetchWallet(),
+        fetchRewardPrices().catch(() => new Map<string, RewardPrice>()),
+      ]);
+      setPrices(p);
       setRewards(r.filter((x) => x.is_active));
       setClaims(c);
       setWallet(w);
@@ -50,11 +57,13 @@ export function RewardsPanel({ nav, email, isAdmin }: Props) {
   async function claim(r: RewardRow) {
     setBusy(r.id); setError(null); setNotice(null);
     try {
-      await claimReward(r.id);
-      setNotice(`${r.name} requested. ${r.price.toLocaleString()} points are held until the admin decides.`);
+      const pay = prices.get(r.id)?.price ?? r.price;
+      await claimReward(r.id, pay);
+      setNotice(`${r.name} requested. ${pay.toLocaleString()} points are held until the admin decides.`);
       await reload();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not send that request.');
+      await reload();   // a sale may have started or ended: show the new price
     } finally { setBusy(null); }
   }
 
@@ -112,11 +121,29 @@ export function RewardsPanel({ nav, email, isAdmin }: Props) {
           </p>
           <div className="prize-grid">
             {rewards.map((r) => {
-              const short = r.price - wallet.points;
+              const sale = prices.get(r.id);
+              const onSale = sale !== undefined && sale.discount_pct !== null && sale.price < sale.list_price;
+              const pay = sale?.price ?? r.price;
+              const short = pay - wallet.points;
               return (
-                <div className="prize" key={r.id} data-affordable={short <= 0 ? 'true' : undefined}>
+                <div className="prize" key={r.id} data-affordable={short <= 0 ? 'true' : undefined}
+                     data-sale={onSale ? 'true' : undefined}>
+                  {onSale && <span className="hot-ribbon">Hot deal −{sale!.discount_pct}%</span>}
                   <b className="prize-name">{r.name}</b>
-                  <span className="prize-price">{r.price.toLocaleString()}<small>points</small></span>
+                  {onSale ? (
+                    <span className="prize-price sale" aria-label={`${pay} points, normally ${sale!.list_price}`}>
+                      <span className="sale-now">
+                        <span className="fire" aria-hidden="true">
+                          <span className="flame f1" /><span className="flame f2" /><span className="flame f3" />
+                        </span>
+                        {pay.toLocaleString()}<small>points</small>
+                      </span>
+                      <s className="sale-was">{sale!.list_price.toLocaleString()}</s>
+                      {sale!.sale_ends && <span className="sale-ends">Sale ends {day(sale!.sale_ends)}</span>}
+                    </span>
+                  ) : (
+                    <span className="prize-price">{r.price.toLocaleString()}<small>points</small></span>
+                  )}
                   <button
                     className="spin small"
                     disabled={short > 0 || busy !== null}
@@ -144,7 +171,9 @@ export function RewardsPanel({ nav, email, isAdmin }: Props) {
                   <div>
                     <b>{c.reward_name}</b>
                     <span className="claim-meta">
-                      {c.price.toLocaleString()} points held · sent {when(c.created_at)}
+                      {c.price.toLocaleString()} points held
+                      {c.list_price && c.list_price > c.price && <> (sale price, normally {c.list_price.toLocaleString()})</>}
+                      {' · '}sent {when(c.created_at)}
                     </span>
                   </div>
                   <button className="linkish danger" disabled={busy !== null}

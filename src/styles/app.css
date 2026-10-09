@@ -994,3 +994,125 @@
 .scatter-note[data-kind='paid'] { border-color: var(--danger); color: var(--ink); }
 .scatter-note[data-kind='paid'] b { color: var(--danger); }
 .scatter-also { color: var(--ink-3); }
+
+/* ================================================================ promotions (0029) */
+
+/* ---------------------------------------------------------------- home-page label */
+.promo-banner {
+  width: var(--stage-w); position: relative;
+  display: flex; align-items: flex-start; gap: .8rem;
+  padding: .85rem 2.6rem .85rem 1rem; border-radius: var(--r-md);
+  background: linear-gradient(120deg, #FFF4E5, #FFFDF6 55%, var(--brand-4));
+  border: 1px solid #F3C98B; box-shadow: var(--shadow-1); color: var(--ink);
+  animation: promo-in .45s cubic-bezier(.2, .9, .3, 1.2) both;
+}
+.promo-banner[data-live='true'] { border-color: #F08A4B; background: linear-gradient(120deg, #FFE9DC, #FFF7EE 55%, #FFF3D6); }
+@keyframes promo-in { from { opacity: 0; transform: translateY(-6px) scale(.98); } to { opacity: 1; transform: none; } }
+.promo-icon { font-size: 1.5rem; line-height: 1; flex: 0 0 auto; margin-top: .1rem; }
+.promo-banner[data-live='true'] .promo-icon { animation: flicker 1.2s ease-in-out infinite; transform-origin: 50% 90%; }
+.promo-body { min-width: 0; flex: 1; }
+.promo-title { margin: 0 0 .35rem; font-weight: 800; font-size: .95rem; }
+.promo-line { margin: 0; font-size: .92rem; line-height: 1.45; }
+.promo-offer { color: var(--ink-2); }
+.promo-when { display: block; margin: .15rem 0 0; font-size: .76rem; color: var(--ink-3); }
+.promo-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .55rem; }
+.promo-list li { padding-left: .7rem; border-left: 3px solid #F3C98B; }
+.promo-list li[data-live='true'] { border-left-color: #E8590C; }
+.promo-list .promo-line { display: block; }
+.promo-actions { margin-top: .4rem; }
+.promo-never { padding: .2rem 0; font-size: .78rem; }
+.promo-close {
+  position: absolute; top: .45rem; right: .5rem; width: 1.9rem; height: 1.9rem;
+  border: none; background: none; border-radius: 50%; cursor: pointer;
+  font-size: 1.3rem; line-height: 1; color: var(--ink-3);
+}
+.promo-close:hover { background: rgba(0, 0, 0, .06); color: var(--ink); }
+
+/* ---------------------------------------------------------------- live boost chip */
+.boost-chip {
+  display: flex; align-items: center; gap: .45rem;
+  border-radius: 12px; padding: .45rem .6rem;
+  background: linear-gradient(135deg, #FF8A3D, #E8590C); color: #fff;
+  box-shadow: 0 4px 14px rgba(232, 89, 12, .35);
+}
+.boost-chip b { display: block; font-size: .9rem; }
+.boost-chip small { display: block; font-size: .66rem; opacity: .92; line-height: 1.3; }
+.boost-flame { font-size: 1.2rem; animation: flicker 1.1s ease-in-out infinite; transform-origin: 50% 90%; }
+.promo-gain { color: #C2410C; font-size: .85em; }
+
+/* ---------------------------------------------------------------- hot-deal prizes */
+.prize { position: relative; }
+.prize[data-sale='true'] {
+  border-color: #F08A4B; background: linear-gradient(180deg, #FFF3E8, var(--surface) 60%);
+  box-shadow: 0 0 0 1px rgba(240, 138, 75, .25), 0 8px 24px rgba(232, 89, 12, .15);
+  animation: deal-glow 2.4s ease-in-out infinite;
+}
+@keyframes deal-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(240, 138, 75, .25), 0 8px 24px rgba(232, 89, 12, .12); }
+  50%      { box-shadow: 0 0 0 2px rgba(240, 138, 75, .45), 0 10px 30px rgba(232, 89, 12, .28); }
+}
+.hot-ribbon {
+  align-self: center; font-size: .68rem; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: #fff; background: linear-gradient(90deg, #E8590C, #F59F00);
+  border-radius: 100px; padding: .2rem .6rem;
+}
+.hot-ribbon small { font-weight: 600; letter-spacing: 0; text-transform: none; opacity: .95; }
+.prize-price.sale { display: flex; flex-direction: column; align-items: center; gap: .05rem; }
+.sale-now small { display: inline; margin: 0 0 0 .15rem; }
+.sale-now {
+  display: inline-flex; align-items: baseline; gap: .3rem;
+  font-family: var(--font-num); font-size: 1.55rem; font-weight: 700; color: #C2410C;
+}
+.sale-was { font-family: var(--font-num); font-size: .9rem; color: var(--ink-3); text-decoration-thickness: 2px; text-decoration-color: rgba(178, 58, 44, .7); }
+
+/* The flame: three soft tongues of fire that flicker beside the price. */
+.fire { position: relative; display: inline-block; width: 1.05rem; height: 1.35rem; margin-right: .15rem; align-self: center; }
+.flame {
+  position: absolute; bottom: 0; left: 50%; border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+  transform-origin: 50% 100%; filter: blur(.3px);
+}
+.flame.f1 { width: 1.05rem; height: 1.35rem; margin-left: -.525rem;
+  background: radial-gradient(circle at 50% 75%, #FFD43B 0 25%, #FF922B 45%, #E8590C 75%, transparent 76%);
+  animation: flame-a 0.9s ease-in-out infinite alternate; }
+.flame.f2 { width: .7rem; height: .95rem; margin-left: -.35rem; opacity: .9;
+  background: radial-gradient(circle at 50% 70%, #FFF3BF 0 30%, #FFD43B 60%, transparent 62%);
+  animation: flame-b 0.7s ease-in-out infinite alternate; }
+.flame.f3 { width: .35rem; height: .45rem; margin-left: -.175rem; bottom: 1.3rem;
+  background: #FF922B; opacity: 0;
+  animation: ember 1.6s ease-out infinite; }
+@keyframes flame-a { from { transform: scale(1, 1) rotate(-3deg); } to { transform: scale(.92, 1.1) rotate(3deg); } }
+@keyframes flame-b { from { transform: scale(1, 1) translateX(-1px); } to { transform: scale(1.08, .9) translateX(1px); } }
+@keyframes ember { 0% { opacity: .9; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-10px) scale(.4); } }
+@keyframes flicker {
+  0%, 100% { transform: scale(1) rotate(-2deg); } 25% { transform: scale(1.08, .96) rotate(2deg); }
+  50% { transform: scale(.96, 1.06) rotate(-1deg); } 75% { transform: scale(1.04) rotate(1deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flame, .boost-flame, .promo-icon, .prize[data-sale='true'], .promo-banner { animation: none !important; }
+}
+
+/* ---------------------------------------------------------------- back office */
+.kind-switch { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.kind-switch button {
+  text-align: left; cursor: pointer; border: 1px solid var(--line-2); border-radius: 12px;
+  background: var(--surface); padding: .6rem .8rem; display: flex; flex-direction: column; gap: .1rem;
+}
+.kind-switch button small { color: var(--ink-3); font-size: .76rem; }
+.kind-switch button[data-on='true'] { border-color: var(--accent); background: #F4F4FF; box-shadow: 0 0 0 2px rgba(75, 78, 196, .15); }
+.daypick { border: none; padding: 0; margin: 0; }
+.daypick legend { font-size: .7rem; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); padding: 0; margin-bottom: .35rem; }
+.daychips { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .3rem; }
+.daychip {
+  min-width: 3rem; cursor: pointer; border: 1px solid var(--line-2); border-radius: 100px;
+  background: var(--surface); padding: .35rem .7rem; font-size: .84rem; font-weight: 600; color: var(--ink-2);
+}
+.daychip[data-on='true'] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.promo-form input[type='date'], .promo-form input[type='time'], .promo-form input[type='number'] { font-family: var(--font-num); }
+.promo-row .tag, .promo-row .status-pill { margin-left: .45rem; }
+.promo-row[data-live='true'] { border-color: #F08A4B; }
+
+.sale-ends { font-size: .72rem; font-weight: 600; color: #C2410C; font-family: var(--font-ui); margin-top: .2rem; }
+.fire { width: 1.25rem; height: 1.6rem; }
+.flame.f1 { width: 1.25rem; height: 1.6rem; margin-left: -.625rem; }
+.flame.f2 { width: .8rem; height: 1.1rem; margin-left: -.4rem; }
+.flame.f3 { bottom: 1.5rem; }

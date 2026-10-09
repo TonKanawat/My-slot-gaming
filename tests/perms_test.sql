@@ -22,7 +22,7 @@ end $$;
 
 -- Re-apply the grants for a database whose roles were created after the
 -- migrations ran (the first time this suite runs on a fresh cluster).
-\i supabase/migrations/0028_permissions_tidy.sql
+select slot.tidy_permissions();
 grant usage on schema slot to anon, authenticated;
 grant select on all tables in schema public to authenticated;
 -- The test helper itself must be callable by every role this suite becomes.

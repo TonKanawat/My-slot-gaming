@@ -1,3 +1,14 @@
+-- ============================================================================
+-- ⚠ ALREADY APPLIED — DO NOT RUN THIS FILE AGAIN.
+-- Later files replaced parts of it. Running it again would silently put these
+-- old versions back over the current ones:
+--   slot.submit_claim / public.claim_reward  → current version is in 0029_promotions.sql
+--   public.reward_claims (view)              → current version is in 0029_promotions.sql
+-- An old one-argument claim_reward would then sit beside the new one, and reward
+-- discounts would stop being applied to claims.
+-- Kept as history only. See supabase/README.md.
+-- ============================================================================
+
 -- bluePi Slot — 0019 rewards claiming
 --
 -- The doc's prize pool (Gold 5,000 / Silver 3,750 / Bronze 2,000), claimed with

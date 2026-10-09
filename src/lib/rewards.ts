@@ -24,6 +24,8 @@ export interface ClaimRow {
   decided_at: string | null;
   decided_by: string | null;   // email of the admin
   note: string | null;
+  /** The normal price when a sale price was paid (0029); null otherwise. */
+  list_price?: number | null;
 }
 
 function client() {
@@ -47,8 +49,13 @@ export async function fetchClaims(): Promise<ClaimRow[]> {
   return (data ?? []) as ClaimRow[];
 }
 
-export async function claimReward(rewardId: string) {
-  const { data, error } = await client().rpc('claim_reward', { p_reward_id: rewardId });
+/** expectedPrice: the price the page showed. If a sale started or ended in the
+ *  meantime the claim is refused with the new price, rather than charging a
+ *  different amount than the player saw. */
+export async function claimReward(rewardId: string, expectedPrice?: number) {
+  const { data, error } = await client().rpc('claim_reward', {
+    p_reward_id: rewardId, p_expected_price: expectedPrice ?? null,
+  });
   if (error) throw new Error(error.message);
   return data as { claim_id: number; reward: string; price: number; points: number };
 }

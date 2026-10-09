@@ -17,8 +17,8 @@ If you're not sure whether a file has been run, don't run it again. Ask first.
 
 | Status | Files |
 |---|---|
-| Applied | 0001–0027 (there is no 0013: it was rolled back and removed) |
-| To run next | 0028 (permissions tidy-up) |
+| Applied | 0001–0028 (there is no 0013: it was rolled back and removed) |
+| To run next | 0029 (promotions) |
 
 ## Where the current version of each function lives
 
@@ -29,6 +29,9 @@ one file.
 |---|---|---|
 | `slot.evaluate_grid` — scores a spin | 0027 | 0003, 0004, 0021 |
 | `slot.spin` — one spin, start to finish | 0022 | 0005, 0008, 0014, 0015 |
+| `slot.apply_spin` — charges the bet, pays the win (and any promotion) | 0029 | 0005 |
+| `slot.submit_claim`, `public.claim_reward` — claim a prize (sale price) | 0029 | 0019 |
+| `public.reward_claims` (view) | 0029 | 0019 |
 | `slot.explain_grid` — "why did that line win/lose" | 0018 | 0015 |
 | `slot.game_ready` | 0016 | 0008 |
 | `slot.claim_account` — first sign-in | 0023 | 0007 |
@@ -57,9 +60,11 @@ Scheduled jobs (pg_cron, all times UTC; Bangkok is +7):
 - **Website entry point:** add a thin `public.<name>` wrapper that just calls the
   `slot` function. PostgREST only exposes `public`.
 - **Permissions:** Postgres lets everyone (PUBLIC) call a new function by default.
-  So `revoke execute ... from public, anon`, then `grant execute ... to
-  authenticated` for anything the website calls. Running `0028` again does this for
-  every function at once, and is safe to repeat.
+  End every migration with `select slot.tidy_permissions();`. It revokes PUBLIC and
+  anon on every game function, grants the website's functions to signed-in users,
+  locks the internal ones, and pins `search_path`. If you add an internal-only
+  function (one the website must never call directly), add its name to the
+  `internal` list inside `slot.tidy_permissions()` (current version: 0029).
 - **Replacing a function:** `create or replace` drops its `set search_path`, so
   write the setting again in the new version. Then add the function to the table
   above, and put the ⚠ banner on the file that held the old version.
